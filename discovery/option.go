@@ -82,6 +82,7 @@ func WithTimeOut(timeOut int) Option {
 // WithCheckHTTP set checkHttp function r.GET(url, func(c *gin.Context) { c.String(200, "Healthy") })
 func WithCheckHTTP(router Router, checkHttp ...string) Option {
 	return func(cfg *Config) {
+		cfg.Router = router
 		var checkHttpUrl = "/health/" + cfg.Id
 		if len(checkHttp) > 0 {
 			checkHttpUrl = checkHttp[0]
@@ -89,6 +90,5 @@ func WithCheckHTTP(router Router, checkHttp ...string) Option {
 		cfg.CheckHTTP = checkHttpUrl
 		cfg.CheckHTTP = fmt.Sprintf("http://%s:%d%s", cfg.ServiceCheckAddr, cfg.ServiceCheckPort, checkHttpUrl)
 		cfg.Router(checkHttpUrl)
-		//router.GET(checkHttpUrl, func(c *gin.Context) { c.String(200, "Healthy") })
 	}
 }
