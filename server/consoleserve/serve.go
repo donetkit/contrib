@@ -100,7 +100,7 @@ func (s *Server) printLog() {
 	s.Logger.Info("======================================================================")
 	s.Logger.Info(console_colors.Green(fmt.Sprintf("Welcome to %s, starting application ...", s.ServiceName)))
 	s.Logger.Info(fmt.Sprintf("framework version        :  %s", console_colors.Blue(s.Version)))
-	s.Logger.Info(fmt.Sprintf("serve & protocol        :  %s", console_colors.Green(s.protocol)))
+	s.Logger.Info(fmt.Sprintf("serve & protocol         :  %s", console_colors.Green(s.protocol)))
 	s.Logger.Info(fmt.Sprintf("application running pid  :  %s", console_colors.Blue(strconv.Itoa(s.pId))))
 	s.Logger.Info(fmt.Sprintf("application name         :  %s", console_colors.Blue(s.ServiceName)))
 	s.Logger.Info(fmt.Sprintf("application exec path    :  %s", console_colors.Yellow(files.GetCurrentDirectory())))

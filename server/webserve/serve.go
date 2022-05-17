@@ -180,7 +180,7 @@ func (s *Server) printLog() {
 	s.Options.Logger.Info("======================================================================")
 	s.Options.Logger.Info(console_colors.Green(fmt.Sprintf("Welcome to %s, starting application ...", s.Options.ServiceName)))
 	s.Options.Logger.Info(fmt.Sprintf("framework version        :  %s", console_colors.Blue(s.Options.Version)))
-	s.Options.Logger.Info(fmt.Sprintf("serve & protocol        :  %s", console_colors.Green(s.Options.protocol)))
+	s.Options.Logger.Info(fmt.Sprintf("serve & protocol         :  %s", console_colors.Green(s.Options.protocol)))
 	s.Options.Logger.Info(fmt.Sprintf("machine host ip          :  %s", console_colors.Blue(s.Options.Host)))
 	s.Options.Logger.Info(fmt.Sprintf("listening on port        :  %s", console_colors.Blue(fmt.Sprintf("%d", s.Options.Port))))
 	s.Options.Logger.Info(fmt.Sprintf("application running pid  :  %s", console_colors.Blue(strconv.Itoa(s.Options.pId))))
