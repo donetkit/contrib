@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"github.com/donetkit/contrib-log/glog"
-	"github.com/donetkit/gin-contrib/db/gorm"
-	"github.com/donetkit/gin-contrib/tracer"
+	"github.com/donetkit/contrib/db/gorm"
+	"github.com/donetkit/contrib/tracer"
 )
 
 const (

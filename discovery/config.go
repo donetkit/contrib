@@ -12,4 +12,5 @@ type Config struct {
 	DeregisterTime      int //check失败后30秒删除本服务，注销时间，相当于过期时间
 	TimeOut             int
 	CheckHTTP           string
+	Router              Router
 }

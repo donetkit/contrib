@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/donetkit/gin-contrib/utils/cache"
-	"github.com/donetkit/gin-contrib/utils/uuid"
-	//"github.com/donetkit/gin-contrib/utils/uuid"
+	"github.com/donetkit/contrib/utils/cache"
+	"github.com/donetkit/contrib/utils/uuid"
+	//"github.com/donetkit/contrib/utils/uuid"
 	"github.com/go-redis/redis/v8"
 	"time"
 )

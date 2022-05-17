@@ -5,7 +5,7 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
-	icache "github.com/donetkit/gin-contrib/utils/cache"
+	icache "github.com/donetkit/contrib/utils/cache"
 	"io"
 	"os"
 	"sync"

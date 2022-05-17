@@ -3,7 +3,7 @@ package memory
 import (
 	"context"
 	"encoding/binary"
-	icache "github.com/donetkit/gin-contrib/utils/cache"
+	icache "github.com/donetkit/contrib/utils/cache"
 	"hash/fnv"
 	"runtime"
 	"time"

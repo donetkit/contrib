@@ -2,7 +2,7 @@ package gorm
 
 import (
 	"github.com/donetkit/contrib-log/glog"
-	"github.com/donetkit/gin-contrib/tracer"
+	"github.com/donetkit/contrib/tracer"
 	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.7.0"
 	"time"

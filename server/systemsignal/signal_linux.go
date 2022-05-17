@@ -2,7 +2,7 @@ package systemsignal
 
 import (
 	"fmt"
-	"github.com/donetkit/gin-contrib/server"
+	"github.com/donetkit/contrib/server"
 	"os"
 	"os/signal"
 	"syscall"

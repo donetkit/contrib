@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"github.com/donetkit/contrib-log/glog"
-	redisRedis "github.com/donetkit/gin-contrib/db/redis"
-	"github.com/donetkit/gin-contrib/tracer"
-	"github.com/donetkit/gin-contrib/utils/cache"
+	redisRedis "github.com/donetkit/contrib/db/redis"
+	"github.com/donetkit/contrib/tracer"
+	"github.com/donetkit/contrib/utils/cache"
 )
 
 const (

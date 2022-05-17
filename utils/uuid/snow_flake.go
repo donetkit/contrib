@@ -1,7 +1,7 @@
 package uuid
 
 import (
-	"github.com/donetkit/gin-contrib/utils/snowflake"
+	"github.com/donetkit/contrib/utils/snowflake"
 	"log"
 )
 

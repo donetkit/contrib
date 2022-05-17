@@ -2,9 +2,9 @@ package consul
 
 import (
 	"fmt"
-	"github.com/donetkit/gin-contrib/discovery"
-	"github.com/donetkit/gin-contrib/utils/host"
-	"github.com/donetkit/gin-contrib/utils/uuid"
+	"github.com/donetkit/contrib/discovery"
+	"github.com/donetkit/contrib/utils/host"
+	"github.com/donetkit/contrib/utils/uuid"
 	consulApi "github.com/hashicorp/consul/api"
 	"github.com/pkg/errors"
 )
@@ -27,6 +27,7 @@ func New(opts ...discovery.Option) (*Client, error) {
 		DeregisterTime:      15,
 		TimeOut:             3,
 	}
+	cfg.CheckHTTPRouter = func(url string) {}
 	for _, opt := range opts {
 		opt(cfg)
 	}

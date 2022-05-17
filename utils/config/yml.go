@@ -2,7 +2,7 @@ package config
 
 import (
 	"errors"
-	"github.com/donetkit/gin-contrib/utils/files"
+	"github.com/donetkit/contrib/utils/files"
 	"gopkg.in/yaml.v3"
 	"os"
 	"path"

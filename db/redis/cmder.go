@@ -3,7 +3,7 @@ package redis
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/donetkit/gin-contrib/utils/strings"
+	"github.com/donetkit/contrib/utils/strings"
 	"github.com/go-redis/redis/v8"
 	"strconv"
 	"time"
