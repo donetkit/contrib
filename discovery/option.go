@@ -79,7 +79,7 @@ func WithTimeOut(timeOut int) Option {
 	}
 }
 
-// WithCheckHTTP set checkHttp function r.GET(checkHttpUrl, func(c *gin.Context) { c.String(200, "Healthy") })
+// WithCheckHTTP set checkHttp function r.GET(url, func(c *gin.Context) { c.String(200, "Healthy") })
 func WithCheckHTTP(router Router, checkHttp ...string) Option {
 	return func(cfg *Config) {
 		var checkHttpUrl = "/health/" + cfg.Id

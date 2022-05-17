@@ -27,7 +27,7 @@ func New(opts ...discovery.Option) (*Client, error) {
 		DeregisterTime:      15,
 		TimeOut:             3,
 	}
-	cfg.CheckHTTPRouter = func(url string) {}
+	cfg.Router = func(url string) {}
 	for _, opt := range opts {
 		opt(cfg)
 	}
