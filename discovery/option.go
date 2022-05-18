@@ -83,7 +83,7 @@ func WithTimeOut(timeOut int) Option {
 func WithCheckHTTP(router Router, checkHttp ...string) Option {
 	return func(cfg *Config) {
 		cfg.Router = router
-		var checkHttpUrl = "/health/" + cfg.Id
+		var checkHttpUrl = fmt.Sprintf("/health/%s.health", cfg.Id)
 		if len(checkHttp) > 0 {
 			checkHttpUrl = checkHttp[0]
 		}
