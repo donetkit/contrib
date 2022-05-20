@@ -4,7 +4,9 @@ import (
 	"fmt"
 )
 
-type Router func(url string)
+type Router func(url string, fn UpdateServerTime)
+
+type UpdateServerTime func()
 
 // Option for queue system
 type Option func(*Config)
@@ -61,6 +63,9 @@ func WithTags(tags ...string) Option {
 // WithIntervalTime set intervalTime function
 func WithIntervalTime(intervalTime int) Option {
 	return func(cfg *Config) {
+		if intervalTime <= 0 {
+			intervalTime = 15
+		}
 		cfg.IntervalTime = intervalTime
 	}
 }
@@ -68,6 +73,9 @@ func WithIntervalTime(intervalTime int) Option {
 // WithDeregisterTime set deregisterTime function
 func WithDeregisterTime(deregisterTime int) Option {
 	return func(cfg *Config) {
+		if deregisterTime <= 0 {
+			deregisterTime = 15
+		}
 		cfg.DeregisterTime = deregisterTime
 	}
 }
@@ -75,7 +83,27 @@ func WithDeregisterTime(deregisterTime int) Option {
 // WithTimeOut set timeOut function
 func WithTimeOut(timeOut int) Option {
 	return func(cfg *Config) {
+		if timeOut <= 0 {
+			timeOut = 3
+		}
 		cfg.TimeOut = timeOut
+	}
+}
+
+// WithCheckOnLine set checkOnLine function
+func WithCheckOnLine(checkOnLine bool) Option {
+	return func(cfg *Config) {
+		cfg.CheckOnLine = checkOnLine
+	}
+}
+
+// WithRetryCount set retryCount function
+func WithRetryCount(retryCount int) Option {
+	return func(cfg *Config) {
+		if retryCount <= 0 {
+			retryCount = 3
+		}
+		cfg.RetryCount = retryCount
 	}
 }
 
@@ -89,6 +117,6 @@ func WithCheckHTTP(router Router, checkHttp ...string) Option {
 		}
 		cfg.CheckHTTP = checkHttpUrl
 		cfg.CheckHTTP = fmt.Sprintf("http://%s:%d%s", cfg.ServiceCheckAddr, cfg.ServiceCheckPort, checkHttpUrl)
-		cfg.Router(checkHttpUrl)
+		cfg.Router(checkHttpUrl, cfg.UpdateTime)
 	}
 }

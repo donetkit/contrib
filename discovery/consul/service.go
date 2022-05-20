@@ -7,6 +7,8 @@ import (
 	"github.com/donetkit/contrib/utils/uuid"
 	consulApi "github.com/hashicorp/consul/api"
 	"github.com/pkg/errors"
+	"os"
+	"time"
 )
 
 type Client struct {
@@ -23,11 +25,18 @@ func New(opts ...discovery.Option) (*Client, error) {
 		ServiceCheckAddr:    host.GetOutBoundIp(),
 		ServiceCheckPort:    80,
 		Tags:                []string{"v0.0.1"},
-		IntervalTime:        5,
+		IntervalTime:        15,
 		DeregisterTime:      15,
 		TimeOut:             3,
+		OnTime:              time.Now().UnixNano() / 1000 / 1000,
+		RetryCount:          3,
 	}
-	cfg.Router = func(url string) {}
+	cfg.Router = func(url string, fn discovery.UpdateServerTime) {}
+	cfg.UpdateTime = func() {
+		if cfg.CheckOnLine {
+			cfg.OnTime = time.Now().UnixNano() / 1000 / 1000
+		}
+	}
 	for _, opt := range opts {
 		opt(cfg)
 	}
@@ -39,10 +48,29 @@ func New(opts ...discovery.Option) (*Client, error) {
 		options: cfg,
 		client:  consulCli,
 	}
+	consulClient.checkServerOnLine()
 	return consulClient, nil
 }
 
 // SetTags set tags []string
 func (s *Client) SetTags(tags ...string) {
 	s.options.Tags = tags
+}
+
+func (s *Client) checkServerOnLine() {
+	if s.options.CheckOnLine {
+		go func() {
+			time.Sleep(time.Second * 5)
+			ticker := time.NewTicker(time.Duration(s.options.IntervalTime) * time.Second)
+			for {
+				select {
+				case <-ticker.C:
+					var timeNow = time.Now().Add(time.Duration(s.options.IntervalTime*s.options.RetryCount)*time.Second*-1).UnixNano() / 1000 / 1000
+					if timeNow > s.options.OnTime {
+						os.Exit(3)
+					}
+				}
+			}
+		}()
+	}
 }

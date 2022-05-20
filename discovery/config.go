@@ -13,4 +13,8 @@ type Config struct {
 	TimeOut             int
 	CheckHTTP           string
 	Router              Router
+	OnTime              int64
+	CheckOnLine         bool
+	UpdateTime          UpdateServerTime
+	RetryCount          int
 }
