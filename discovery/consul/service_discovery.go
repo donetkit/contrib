@@ -14,14 +14,14 @@ func (s *Client) Register() error {
 		HTTP:                           s.options.CheckHTTP,
 	}
 	if s.options.CheckHTTP == "" {
-		check.TCP = fmt.Sprintf("%s:%d", s.options.ServiceCheckAddr, s.options.ServiceCheckPort)
+		check.TCP = fmt.Sprintf("%s:%d", s.options.CheckAddr, s.options.CheckPort)
 	}
 	svcReg := &consulApi.AgentServiceRegistration{
 		ID:                s.options.Id,
-		Name:              s.options.ServiceName,
+		Name:              s.options.Name,
 		Tags:              s.options.Tags,
-		Port:              s.options.ServiceCheckPort,
-		Address:           s.options.ServiceCheckAddr,
+		Port:              s.options.CheckPort,
+		Address:           s.options.CheckAddr,
 		EnableTagOverride: true,
 		Check:             check,
 		Checks:            nil,

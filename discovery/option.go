@@ -2,11 +2,30 @@ package discovery
 
 import (
 	"fmt"
+	"time"
 )
 
-type Router func(url string, fn UpdateServerTime)
+type HttpRouter func(r *CheckResponse)
 
-type UpdateServerTime func()
+type CheckResponse struct {
+	Url        string
+	healthy    string
+	onTime     int64
+	RetryCount int
+}
+
+func (r *CheckResponse) Result() string {
+	r.onTime = time.Now().UnixNano() / 1000 / 1000
+	return r.healthy
+}
+
+func (r *CheckResponse) GetOnTime() int64 {
+	return r.onTime
+}
+
+func (r *CheckResponse) SetHealthy(healthy string) {
+	r.healthy = healthy
+}
 
 // Option for queue system
 type Option func(*Config)
@@ -18,38 +37,38 @@ func WithId(id string) Option {
 	}
 }
 
-// WithServiceName set serviceName function
-func WithServiceName(serviceName string) Option {
+// WithName set name function
+func WithName(name string) Option {
 	return func(cfg *Config) {
-		cfg.ServiceName = serviceName
+		cfg.Name = name
 	}
 }
 
-// WithServiceRegisterAddr set serviceRegisterAddr function
-func WithServiceRegisterAddr(serviceRegisterAddr string) Option {
+// WithRegisterAddr set addr function
+func WithRegisterAddr(addr string) Option {
 	return func(cfg *Config) {
-		cfg.ServiceRegisterAddr = serviceRegisterAddr
+		cfg.RegisterAddr = addr
 	}
 }
 
-// WithServiceRegisterPort set serviceRegisterPort function
-func WithServiceRegisterPort(serviceRegisterPort int) Option {
+// WithRegisterPort set port function
+func WithRegisterPort(port int) Option {
 	return func(cfg *Config) {
-		cfg.ServiceRegisterPort = serviceRegisterPort
+		cfg.RegisterPort = port
 	}
 }
 
-// WithServiceCheckAddr set serviceCheckAddr function
-func WithServiceCheckAddr(serviceCheckAddr string) Option {
+// WithCheckAddr set addr function
+func WithCheckAddr(addr string) Option {
 	return func(cfg *Config) {
-		cfg.ServiceCheckAddr = serviceCheckAddr
+		cfg.CheckAddr = addr
 	}
 }
 
-// WithServiceCheckPort set serviceCheckPort function
-func WithServiceCheckPort(serviceCheckPort int) Option {
+// WithCheckPort set port function
+func WithCheckPort(port int) Option {
 	return func(cfg *Config) {
-		cfg.ServiceCheckPort = serviceCheckPort
+		cfg.CheckPort = port
 	}
 }
 
@@ -90,33 +109,24 @@ func WithTimeOut(timeOut int) Option {
 	}
 }
 
-// WithCheckOnLine set checkOnLine function
-func WithCheckOnLine(checkOnLine bool) Option {
+// WithEnableHealthyStatus  checkHealthyStatus function
+func WithEnableHealthyStatus() Option {
 	return func(cfg *Config) {
-		cfg.CheckOnLine = checkOnLine
-	}
-}
-
-// WithRetryCount set retryCount function
-func WithRetryCount(retryCount int) Option {
-	return func(cfg *Config) {
-		if retryCount <= 0 {
-			retryCount = 3
-		}
-		cfg.RetryCount = retryCount
+		cfg.CheckHealthyStatus = true
 	}
 }
 
 // WithCheckHTTP set checkHttp function r.GET(url, func(c *gin.Context) { c.String(200, "Healthy") })
-func WithCheckHTTP(router Router, checkHttp ...string) Option {
+func WithCheckHTTP(router HttpRouter, checkHttp ...string) Option {
 	return func(cfg *Config) {
-		cfg.Router = router
-		var checkHttpUrl = fmt.Sprintf("/health/%s.health", cfg.Id)
+		cfg.HttpRouter = router
+		var url = fmt.Sprintf("/health/%s.health", cfg.Id)
 		if len(checkHttp) > 0 {
-			checkHttpUrl = checkHttp[0]
+			url = checkHttp[0]
 		}
-		cfg.CheckHTTP = checkHttpUrl
-		cfg.CheckHTTP = fmt.Sprintf("http://%s:%d%s", cfg.ServiceCheckAddr, cfg.ServiceCheckPort, checkHttpUrl)
-		cfg.Router(checkHttpUrl, cfg.UpdateTime)
+		cfg.CheckHTTP = url
+		cfg.CheckHTTP = fmt.Sprintf("http://%s:%d%s", cfg.CheckAddr, cfg.CheckPort, url)
+		cfg.CheckResponse.Url = url
+		cfg.HttpRouter(cfg.CheckResponse)
 	}
 }
