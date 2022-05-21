@@ -67,6 +67,7 @@ func (s *Client) checkServerOnLine() {
 				case <-ticker.C:
 					var timeNow = time.Now().Add(time.Duration(s.options.IntervalTime*s.options.RetryCount)*time.Second*-1).UnixNano() / 1000 / 1000
 					if timeNow > s.options.OnTime {
+						ticker.Stop()
 						os.Exit(3)
 					}
 				}
