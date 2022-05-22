@@ -76,6 +76,7 @@ func (p *sqlConfig) before(spanName string) gormHookFunc {
 		if p.tracerServer == nil {
 			return
 		}
+		//tx.Dialector.Name()
 		if tx.Statement.Table != "" {
 			name = fmt.Sprintf("db:gorm:%s:%s", tx.Statement.Table, spanName)
 		} else {
@@ -122,6 +123,7 @@ func (p *sqlConfig) after() gormHookFunc {
 		}
 
 		span.SetAttributes(attrs...)
+		p.logger.Info(tx.Statement.RowsAffected)
 		switch tx.Error {
 		case nil,
 			gorm.ErrRecordNotFound,
