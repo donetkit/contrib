@@ -21,7 +21,7 @@ func main() {
 	tp, err := tracer.NewTracerProvider(service, "127.0.0.1", environment, 6831)
 	if err == nil {
 		jaeger := tracer.Jaeger{}
-		traceServer = tracer.New(tracer.WithTracerName(service), tracer.WithTracerProvider(tp), tracer.WithPropagators(jaeger))
+		traceServer = tracer.New(tracer.WithName(service), tracer.WithProvider(tp), tracer.WithPropagators(jaeger))
 	}
 
 	rdb := redisRedis.New(redisRedis.WithLogger(log), redisRedis.WithTracer(traceServer), redisRedis.WithAddr("127.0.0.1"), redisRedis.WithPassword("test"), redisRedis.WithDB(0))
