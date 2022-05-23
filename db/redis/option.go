@@ -9,14 +9,14 @@ import (
 )
 
 type config struct {
-	ctx          context.Context
-	logger       glog.ILogger
-	tracerServer *tracer.Server
-	attrs        []attribute.KeyValue
-	addr         string
-	port         int
-	password     string
-	db           int
+	ctx      context.Context
+	logger   glog.ILogger
+	tracer   *tracer.Server
+	attrs    []attribute.KeyValue
+	addr     string
+	port     int
+	password string
+	db       int
 }
 
 // Option specifies instrumentation configuration options.
@@ -31,7 +31,7 @@ type Option func(p *config)
 func WithTracer(tracerServer *tracer.Server) Option {
 	return func(cfg *config) {
 		if tracerServer != nil {
-			cfg.tracerServer = tracerServer
+			cfg.tracer = tracerServer
 		}
 	}
 }

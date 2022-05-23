@@ -59,8 +59,8 @@ func (c *config) newClient(db int) *redis.Client {
 			c.logger.Error("connect redis failed" + err.Error())
 		}
 	}
-	if c.tracerServer != nil {
-		client.AddHook(newTracingHook(c.logger, c.tracerServer, c.attrs))
+	if c.tracer != nil {
+		client.AddHook(newTracingHook(c.logger, c.tracer, c.attrs))
 	}
 	return client
 }

@@ -34,9 +34,9 @@ func WithPropagators(propagators propagation.TextMapPropagator) Option {
 	})
 }
 
-// WithTracerProvider specifies a tracer provider to use for creating a tracer.
+// WithProvider specifies a tracer provider to use for creating a tracer.
 // If none is specified, the global provider is used.
-func WithTracerProvider(provider oteltrace.TracerProvider) Option {
+func WithProvider(provider oteltrace.TracerProvider) Option {
 	return optionFunc(func(cfg *Server) {
 		if provider != nil {
 			cfg.TracerProvider = provider
@@ -44,9 +44,9 @@ func WithTracerProvider(provider oteltrace.TracerProvider) Option {
 	})
 }
 
-// WithTracerName tracerName default Service
-func WithTracerName(tracerName string) Option {
+// WithName name default Service
+func WithName(name string) Option {
 	return optionFunc(func(cfg *Server) {
-		cfg.tracerName = tracerName
+		cfg.tracerName = name
 	})
 }
