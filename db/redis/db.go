@@ -9,9 +9,10 @@ import (
 var allClient []*redis.Client
 
 type Cache struct {
-	ctxCache context.Context
-	client   *redis.Client
-	config   *config
+	db     int
+	ctx    context.Context
+	client *redis.Client
+	config *config
 }
 
 func New(opts ...Option) *Cache {
@@ -26,7 +27,7 @@ func New(opts ...Option) *Cache {
 		opt(c)
 	}
 	allClient = c.newRedisClient()
-	return &Cache{config: c, ctxCache: c.ctx, client: allClient[c.db]}
+	return &Cache{config: c, ctx: c.ctx, client: allClient[c.db]}
 }
 
 func (c *config) newRedisClient() []*redis.Client {
