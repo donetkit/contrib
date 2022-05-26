@@ -60,7 +60,11 @@ func (c *Cache) GetString(key string) (string, error) {
 }
 
 func (c *Cache) Set(key string, val interface{}, timeout time.Duration) error {
-	return c.getInstance().client.Set(c.ctx, key, val, timeout).Err()
+	data, err := json.Marshal(val)
+	if err != nil {
+		return err
+	}
+	return c.getInstance().client.Set(c.ctx, key, data, timeout).Err()
 }
 
 //IsExist 判断key是否存在
