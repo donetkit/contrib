@@ -123,7 +123,7 @@ func (p *sqlConfig) after() gormHookFunc {
 		}
 
 		span.SetAttributes(attrs...)
-		p.logger.Info(tx.Statement.RowsAffected)
+		//p.logger.Info(tx.Statement.RowsAffected)
 		switch tx.Error {
 		case nil,
 			gorm.ErrRecordNotFound,
