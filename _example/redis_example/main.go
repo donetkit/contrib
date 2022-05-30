@@ -18,7 +18,8 @@ func main() {
 
 	log := glog.New()
 	var traceServer *tracer.Server
-	tp, err := tracer.NewTracerProvider(service, "127.0.0.1", environment, 6831)
+	fs := tracer.NewFallbackSampler(0.1)
+	tp, err := tracer.NewTracerProvider(service, "127.0.0.1", environment, 6831, fs)
 	if err == nil {
 		jaeger := tracer.Jaeger{}
 		traceServer = tracer.New(tracer.WithName(service), tracer.WithProvider(tp), tracer.WithPropagators(jaeger))
@@ -29,7 +30,6 @@ func main() {
 		log.Error(err.Error())
 		return
 	}
-	//fmt.Println("tracer", otelplay.TraceURL(span))
 }
 func redisCommands(ctx context.Context, traceServer *tracer.Server, rdb cache.ICache) error {
 	ctx, span := traceServer.Tracer.Start(ctx, "cache")

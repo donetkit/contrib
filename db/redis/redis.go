@@ -37,7 +37,7 @@ func (h *TracingHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (conte
 		return ctx, nil
 	}
 	opts := []trace.SpanStartOption{
-		//tracer.WithSpanKind(tracer.SpanKindClient),
+		trace.WithSpanKind(trace.SpanKindClient),
 		trace.WithAttributes(h.attrs...),
 		trace.WithAttributes(
 			iconv.DBStatementKey.String(cmdName),
@@ -73,7 +73,7 @@ func (h *TracingHook) BeforeProcessPipeline(ctx context.Context, cmd []redis.Cmd
 	}
 	summary, _ := CmdsString(cmd)
 	opts := []trace.SpanStartOption{
-		//tracer.WithSpanKind(tracer.SpanKindClient),
+		trace.WithSpanKind(trace.SpanKindClient),
 		trace.WithAttributes(h.attrs...),
 		trace.WithAttributes(
 			iconv.DBStatementKey.String(cmdName),

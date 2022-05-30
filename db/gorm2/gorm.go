@@ -74,13 +74,6 @@ func (p *sqlConfig) before(operation string) gormHookFunc {
 		if p.tracerServer == nil {
 			return
 		}
-		//var name1 = tx.Dialector.Name()
-		//fmt.Println(name1)
-		//if tx.Statement.Table != "" {
-		//	name = fmt.Sprintf("db:gorm:%s:%s", tx.Statement.Table, spanName)
-		//} else {
-		//	name = fmt.Sprintf("db:gorm:%s", spanName)
-		//}
 		tx.Statement.Context, _ = p.tracerServer.Tracer.
 			Start(tx.Statement.Context, p.spanName(tx, operation), trace.WithSpanKind(trace.SpanKindClient))
 	}

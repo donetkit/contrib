@@ -9,13 +9,14 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.7.0"
 )
 
-func NewTracerProvider(service, host, development string, port int) (*trace.TracerProvider, error) {
+func NewTracerProvider(service, host, development string, port int, sampler trace.Sampler) (*trace.TracerProvider, error) {
 	exp, err := jaeger.New(jaeger.WithAgentEndpoint(jaeger.WithAgentHost(host), jaeger.WithAgentPort(fmt.Sprintf("%d", port))))
 	//exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(url)))
 	if err != nil {
 		return nil, err
 	}
 	tracerProvider := trace.NewTracerProvider(
+		trace.WithSampler(sampler),
 		trace.WithBatcher(exp),
 		trace.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
