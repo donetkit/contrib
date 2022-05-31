@@ -84,6 +84,7 @@ func (op *sqlConfig) after(operation string) gormHookFunc {
 		if op.tracerServer == nil {
 			return
 		}
+
 		span := trace.SpanFromContext(tx.Statement.Context)
 		if !span.IsRecording() {
 			// skip the reporting if not recording

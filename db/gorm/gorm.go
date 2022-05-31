@@ -11,6 +11,26 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"gorm.io/gorm"
 	"io"
+	"strings"
+)
+
+const (
+	callBackBeforeName = "gorm:before"
+	callBackAfterName  = "gorm:after"
+	opCreate           = "INSERT"
+	opQuery            = "SELECT"
+	opDelete           = "DELETE"
+	opUpdate           = "UPDATE"
+)
+
+type internalCtxKey string
+
+const (
+	dbTableKey        = attribute.Key("db.sql.table")
+	dbRowsAffectedKey = attribute.Key("db.rows_affected")
+	dbOperationKey    = semconv.DBOperationKey
+	dbStatementKey    = semconv.DBStatementKey
+	omitVarsKey       = internalCtxKey("omit_vars")
 )
 
 var dbRowsAffected = attribute.Key("db.rows_affected")
@@ -41,23 +61,21 @@ func (p *sqlConfig) Initialize(db *gorm.DB) (err error) {
 		hook     gormHookFunc
 		name     string
 	}{
-		{cb.Create().Before("gorm:create"), p.before("create"), "before:create"},
-		{cb.Create().After("gorm:create"), p.after(), "after:create"},
+		// before hooks
+		{cb.Create().Before("gorm:before_create"), p.before(opCreate), beforeName("create")},
+		{cb.Query().Before("gorm:before_query"), p.before(opQuery), beforeName("query")},
+		{cb.Delete().Before("gorm:before_delete"), p.before(opDelete), beforeName("delete")},
+		{cb.Update().Before("gorm:before_update"), p.before(opUpdate), beforeName("update")},
+		{cb.Row().Before("gorm:before_row"), p.before(opQuery), beforeName("row")},
+		{cb.Raw().Before("gorm:before_raw"), p.before(opQuery), beforeName("raw")},
 
-		{cb.Query().Before("gorm:query"), p.before("query"), "before:select"},
-		{cb.Query().After("gorm:query"), p.after(), "after:select"},
-
-		{cb.Delete().Before("gorm:delete"), p.before("delete"), "before:delete"},
-		{cb.Delete().After("gorm:delete"), p.after(), "after:delete"},
-
-		{cb.Update().Before("gorm:update"), p.before("update"), "before:update"},
-		{cb.Update().After("gorm:update"), p.after(), "after:update"},
-
-		{cb.Row().Before("gorm:row"), p.before("row"), "before:row"},
-		{cb.Row().After("gorm:row"), p.after(), "after:row"},
-
-		{cb.Raw().Before("gorm:raw"), p.before("raw"), "before:raw"},
-		{cb.Raw().After("gorm:raw"), p.after(), "after:raw"},
+		// after hooks
+		{cb.Create().After("gorm:after_create"), p.after(opCreate), afterName("create")},
+		{cb.Query().After("gorm:after_query"), p.after(opQuery), afterName("select")},
+		{cb.Delete().After("gorm:after_delete"), p.after(opDelete), afterName("delete")},
+		{cb.Update().After("gorm:after_update"), p.after(opUpdate), afterName("update")},
+		{cb.Row().After("gorm:after_row"), p.after(opQuery), afterName("row")},
+		{cb.Raw().After("gorm:after_raw"), p.after(opQuery), afterName("raw")},
 	}
 
 	var firstErr error
@@ -70,23 +88,22 @@ func (p *sqlConfig) Initialize(db *gorm.DB) (err error) {
 	return firstErr
 }
 
-func (p *sqlConfig) before(spanName string) gormHookFunc {
+func (p *sqlConfig) before(operation string) gormHookFunc {
 	return func(tx *gorm.DB) {
-		var name string
 		if p.tracerServer == nil {
 			return
 		}
-		//tx.Dialector.Name()
-		if tx.Statement.Table != "" {
-			name = fmt.Sprintf("db:gorm:%s:%s", tx.Statement.Table, spanName)
-		} else {
-			name = fmt.Sprintf("db:gorm:%s", spanName)
+		opts := []trace.SpanStartOption{
+			trace.WithSpanKind(trace.SpanKindClient),
 		}
-		tx.Statement.Context, _ = p.tracerServer.Tracer.Start(tx.Statement.Context, name)
+		spanName := p.spanName(tx, operation)
+		spanName = fmt.Sprintf("db:gorm:%s", spanName)
+		p.logger.Info(spanName)
+		tx.Statement.Context, _ = p.tracerServer.Tracer.Start(tx.Statement.Context, spanName, opts...)
 	}
 }
 
-func (p *sqlConfig) after() gormHookFunc {
+func (p *sqlConfig) after(operation string) gormHookFunc {
 	return func(tx *gorm.DB) {
 		if p.tracerServer == nil {
 			return
@@ -102,7 +119,6 @@ func (p *sqlConfig) after() gormHookFunc {
 		if sys := dbSystem(tx); sys.Valid() {
 			attrs = append(attrs, sys)
 		}
-
 		vars := tx.Statement.Vars
 		if p.excludeQueryVars {
 			// Replace query variables with '?' to mask them
@@ -162,4 +178,37 @@ func dbSystem(tx *gorm.DB) attribute.KeyValue {
 	default:
 		return attribute.KeyValue{}
 	}
+}
+
+func beforeName(name string) string {
+	return callBackBeforeName + "_" + name
+}
+
+func afterName(name string) string {
+	return callBackAfterName + "_" + name
+}
+
+func (p *sqlConfig) spanName(tx *gorm.DB, operation string) string {
+	query := extractQuery(tx)
+	operation = operationForQuery(query, operation)
+	table := ""
+	if tx.Statement != nil && tx.Statement.Table != "" {
+		table = ":" + tx.Statement.Table
+	}
+	operation = strings.ToLower(operation)
+	return fmt.Sprintf("%s%s", operation, table)
+}
+
+func extractQuery(tx *gorm.DB) string {
+	if shouldOmit, _ := tx.Statement.Context.Value(omitVarsKey).(bool); shouldOmit {
+		return tx.Statement.SQL.String()
+	}
+	return tx.Dialector.Explain(tx.Statement.SQL.String(), tx.Statement.Vars...)
+}
+
+func operationForQuery(query, op string) string {
+	if op != "" {
+		return op
+	}
+	return strings.ToUpper(strings.Split(query, " ")[0])
 }
