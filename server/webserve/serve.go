@@ -11,7 +11,6 @@ import (
 	"github.com/donetkit/contrib/utils/console_colors"
 	"github.com/donetkit/contrib/utils/files"
 	"github.com/donetkit/contrib/utils/host"
-	"github.com/pkg/errors"
 	"net/http"
 	"os"
 	"strconv"
@@ -150,9 +149,7 @@ func (s *Server) SetRunMode(mode string) {
 
 func (s *Server) StopNotify(sig os.Signal) {
 	s.Options.Logger.Info("receive a signal, " + "signal: " + sig.String())
-	if err := s.stop(); err != nil {
-		s.Options.Logger.Error("stop http webserve error %s", err.Error())
-	}
+	s.stop()
 	if s.Options.Tracer != nil {
 		s.Options.Tracer.Stop(s.Options.Ctx)
 	}
@@ -162,18 +159,17 @@ func (s *Server) Shutdown() {
 	close(s.Options.exit)
 }
 
-func (s *Server) stop() error {
+func (s *Server) stop() {
 	s.Options.Logger.Info("Server is stopping")
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5) // 平滑关闭,等待5秒钟处理
 	defer cancel()
 	if err := s.deregister(); err != nil {
-		return errors.Wrap(err, "deregister http webserve error")
+		s.Options.Logger.Error("deregister http webserve error", err.Error())
 	}
 	if err := s.Options.httpServer.Shutdown(ctx); err != nil {
-		return errors.Wrap(err, "shutdown http webserve error")
+		s.Options.Logger.Error("shutdown http webserve error", err.Error())
 	}
 	s.Options.Logger.Info("Server is stopped.")
-	return nil
 }
 
 func (s *Server) printLog() {
