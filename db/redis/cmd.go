@@ -212,3 +212,34 @@ func (c *Cache) Decrement(key string, value int64) (int64, error) {
 func (c *Cache) Flush() {
 	c.getInstance().client.FlushAll(c.ctx)
 }
+
+func (c *Cache) ZAdd(key string, score float64, member interface{}) interface{} {
+	//NX: 添加元素时，如果该元素已经存在，则添加失败。
+	//XX: 添加元素时，如果元素存在，执行修改，如果不存在，则失败。
+	//CH：修改元素分数，后面可以接多个score member
+	//INCR: 和 ZINCRBY 一样的效果，可以指定某一个元素，给它的分数进行加减操作
+	cmd := c.getInstance().client.ZAdd(c.ctx, key, &redis.Z{Score: score, Member: member})
+	if cmd.Err() != nil {
+		return cmd.Err()
+	}
+	return nil
+}
+
+func (c *Cache) ZRangeByScore(key string, min, max int64) ([]string, error) {
+	cmd := c.getInstance().client.ZRangeByScore(c.ctx, key, &redis.ZRangeBy{
+		Min: fmt.Sprintf("%d", min),
+		Max: fmt.Sprintf("%d", max),
+	})
+	if cmd.Err() != nil {
+		return nil, cmd.Err()
+	}
+	return cmd.Val(), nil
+}
+
+func (c *Cache) ZRem(key string, members ...interface{}) error {
+	cmd := c.getInstance().client.ZRem(c.ctx, key, members)
+	if cmd.Err() != nil {
+		return cmd.Err()
+	}
+	return nil
+}

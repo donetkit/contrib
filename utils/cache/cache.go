@@ -31,6 +31,10 @@ type ICache interface {
 	Decrement(string, int64) (int64, error)
 
 	Flush()
+
+	ZAdd(string, float64, interface{}) interface{}
+	ZRangeByScore(string, int64, int64) ([]string, error)
+	ZRem(string, ...interface{}) error
 }
 
 type IShortCache interface {
