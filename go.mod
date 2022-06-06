@@ -16,7 +16,6 @@ require (
 	go.opentelemetry.io/otel/trace v1.7.0
 	golang.org/x/sys v0.0.0-20220513210249-45d2b4557a2a
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
-	gorm.io/driver/mysql v1.3.3
 	gorm.io/gorm v1.23.5
 )
 
@@ -28,7 +27,6 @@ require (
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/google/btree v1.0.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-hclog v1.2.0 // indirect

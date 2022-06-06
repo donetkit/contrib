@@ -6,7 +6,7 @@ import (
 	"github.com/donetkit/contrib/db/db_sql"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
-	semconv "go.opentelemetry.io/otel/semconv/v1.7.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.10.0"
 	"go.opentelemetry.io/otel/trace"
 	"gorm.io/gorm"
 	"strings"
@@ -14,11 +14,11 @@ import (
 
 var dbRowsAffected = attribute.Key("db.rows_affected")
 
-func NewPlugin(plugin *sqlConfig) *sqlConfig {
+func NewPlugin(plugin *Config) *Config {
 	return plugin
 }
 
-func (p *sqlConfig) Name() string {
+func (p *Config) Name() string {
 	return "gorm"
 }
 
@@ -28,8 +28,8 @@ type gormRegister interface {
 	Register(name string, fn func(*gorm.DB)) error
 }
 
-func (p *sqlConfig) Initialize(db *gorm.DB) (err error) {
-	if !p.excludeMetrics {
+func (p *Config) Initialize(db *gorm.DB) (err error) {
+	if !p.ExcludeMetrics {
 		if db, ok := db.ConnPool.(*sql.DB); ok {
 			db_sql.ReportDBStatsMetrics(db)
 		}
@@ -67,20 +67,20 @@ func (p *sqlConfig) Initialize(db *gorm.DB) (err error) {
 	return firstErr
 }
 
-func (p *sqlConfig) before(operation string) gormHookFunc {
+func (p *Config) before(operation string) gormHookFunc {
 	return func(tx *gorm.DB) {
-		if p.tracerServer == nil {
+		if p.TracerServer == nil {
 			return
 		}
 		spanName := p.spanName(tx, strings.ToLower(operation))
 		spanName = fmt.Sprintf("db:gorm:%s", spanName)
-		tx.Statement.Context, _ = p.tracerServer.Tracer.Start(tx.Statement.Context, spanName, trace.WithSpanKind(trace.SpanKindClient))
+		tx.Statement.Context, _ = p.TracerServer.Tracer.Start(tx.Statement.Context, spanName, trace.WithSpanKind(trace.SpanKindClient))
 	}
 }
 
-func (p *sqlConfig) after(operation string) gormHookFunc {
+func (p *Config) after(operation string) gormHookFunc {
 	return func(tx *gorm.DB) {
-		if p.tracerServer == nil {
+		if p.TracerServer == nil {
 			return
 		}
 		span := trace.SpanFromContext(tx.Statement.Context)
@@ -95,13 +95,13 @@ func (p *sqlConfig) after(operation string) gormHookFunc {
 		if tx.Error != nil {
 			span.SetStatus(codes.Error, tx.Error.Error())
 		}
-		attrs := make([]attribute.KeyValue, 0, len(p.attrs)+4)
-		attrs = append(attrs, p.attrs...)
+		attrs := make([]attribute.KeyValue, 0, len(p.Attrs)+4)
+		attrs = append(attrs, p.Attrs...)
 		if sys := dbSystem(tx); sys.Valid() {
 			attrs = append(attrs, sys)
 		}
 		vars := tx.Statement.Vars
-		if p.excludeQueryVars {
+		if p.ExcludeQueryVars {
 			vars = make([]interface{}, len(tx.Statement.Vars))
 			for i := 0; i < len(vars); i++ {
 				vars[i] = "?"
@@ -120,9 +120,9 @@ func (p *sqlConfig) after(operation string) gormHookFunc {
 	}
 }
 
-func (p *sqlConfig) formatQuery(query string) string {
-	if p.queryFormatter != nil {
-		return p.queryFormatter(query)
+func (p *Config) formatQuery(query string) string {
+	if p.QueryFormatter != nil {
+		return p.QueryFormatter(query)
 	}
 	return query
 }
@@ -154,7 +154,7 @@ func afterName(name string) string {
 	return callBackAfterName + "_" + name
 }
 
-func (p *sqlConfig) spanName(tx *gorm.DB, operation string) string {
+func (p *Config) spanName(tx *gorm.DB, operation string) string {
 	table := ""
 	if tx.Statement != nil && tx.Statement.Table != "" {
 		table = ":" + tx.Statement.Table

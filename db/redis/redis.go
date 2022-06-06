@@ -8,7 +8,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
-	iconv "go.opentelemetry.io/otel/semconv/v1.7.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.10.0"
 	"go.opentelemetry.io/otel/trace"
 	"strings"
 )
@@ -40,7 +40,7 @@ func (h *TracingHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (conte
 		trace.WithSpanKind(trace.SpanKindClient),
 		trace.WithAttributes(h.attrs...),
 		trace.WithAttributes(
-			iconv.DBStatementKey.String(cmdName),
+			semconv.DBStatementKey.String(cmdName),
 		),
 	}
 	ctx, _ = h.tracerServer.Tracer.Start(ctx, cmd.FullName(), opts...)
@@ -80,7 +80,7 @@ func (h *TracingHook) BeforeProcessPipeline(ctx context.Context, cmd []redis.Cmd
 		trace.WithSpanKind(trace.SpanKindClient),
 		trace.WithAttributes(h.attrs...),
 		trace.WithAttributes(
-			iconv.DBStatementKey.String(cmdName),
+			semconv.DBStatementKey.String(cmdName),
 			attribute.Int("db.redis.num_cmd", len(cmd)),
 		),
 	}
