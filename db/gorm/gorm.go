@@ -72,6 +72,10 @@ func (p *Config) before(operation string) gormHookFunc {
 		if p.TracerServer == nil {
 			return
 		}
+		span := trace.SpanFromContext(tx.Statement.Context)
+		if !span.IsRecording() {
+			return
+		}
 		spanName := p.spanName(tx, strings.ToLower(operation))
 		spanName = fmt.Sprintf("db:gorm:%s", spanName)
 		tx.Statement.Context, _ = p.TracerServer.Tracer.Start(tx.Statement.Context, spanName, trace.WithSpanKind(trace.SpanKindClient))
