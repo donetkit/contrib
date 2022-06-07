@@ -85,13 +85,9 @@ func (p *Config) after(operation string) gormHookFunc {
 		}
 		span := trace.SpanFromContext(tx.Statement.Context)
 		if !span.IsRecording() {
-			// skip the reporting if not recording
 			return
 		}
 		defer span.End()
-
-		//span.SetName(op.spanName(tx, operation))
-		// Error
 		if tx.Error != nil {
 			span.SetStatus(codes.Error, tx.Error.Error())
 		}

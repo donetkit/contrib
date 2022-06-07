@@ -48,10 +48,6 @@ func (h *TracingHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (conte
 }
 
 func (h *TracingHook) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
-	//cmdName := getTraceFullName(cmd)
-	//if h.logger != nil {
-	//	h.logger.Info(fmt.Sprintf("db:redis:%s", cmd.String()))
-	//}
 	if h.tracerServer == nil {
 		return nil
 	}
