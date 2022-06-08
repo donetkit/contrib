@@ -17,7 +17,7 @@ const (
 )
 
 type Config struct {
-	Logger           glog.ILogger
+	Logger           glog.ILoggerEntry
 	TracerServer     *tracer.Server
 	Attrs            []attribute.KeyValue
 	ExcludeQueryVars bool
@@ -28,5 +28,5 @@ type Config struct {
 type LogSql struct {
 	SlowThreshold             time.Duration
 	IgnoreRecordNotFoundError bool
-	Logger                    glog.ILogger
+	Logger                    glog.ILoggerEntry
 }

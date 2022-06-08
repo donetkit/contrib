@@ -17,7 +17,7 @@ func WithServiceName(serviceName string) Option {
 // WithLogger set logger function
 func WithLogger(logger glog.ILogger) Option {
 	return func(cfg *Server) {
-		cfg.Logger = logger
+		cfg.Logger = logger.WithField("Serve", "Serve")
 	}
 }
 

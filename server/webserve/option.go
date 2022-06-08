@@ -68,7 +68,7 @@ func WithMaxHeaderBytes(maxHeaderBytes int) Option {
 // WithLogger set logger function
 func WithLogger(logger glog.ILogger) Option {
 	return func(cfg *config) {
-		cfg.Logger = logger
+		cfg.Logger = logger.WithField("WebServe", "WebServe")
 	}
 }
 

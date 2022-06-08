@@ -33,7 +33,7 @@ package gorm2
 //type sqlConfig struct {
 //	ignoreRecordNotFoundError bool
 //	slowThreshold             time.Duration
-//	logger                    glog.ILogger
+//	logger                    glog.ILoggerEntry
 //	tracerServer              *tracer.Server
 //	attrs                     []attribute.KeyValue
 //	excludeQueryVars          bool

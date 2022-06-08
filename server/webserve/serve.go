@@ -21,7 +21,7 @@ type config struct {
 	exit            chan struct{}
 	Ctx             context.Context
 	Tracer          *tracer.Server
-	Logger          glog.ILogger
+	Logger          glog.ILoggerEntry
 	ServiceName     string
 	Host            string
 	Port            int
@@ -49,7 +49,6 @@ func New(opts ...Option) *Server {
 		ServiceName:    "demo",
 		Host:           host.GetOutBoundIp(),
 		Port:           80,
-		Logger:         glog.New(),
 		Version:        "V0.1",
 		protocol:       "HTTP API",
 		pId:            os.Getpid(),
@@ -63,6 +62,9 @@ func New(opts ...Option) *Server {
 	}
 	server := &Server{
 		Options: cfg,
+	}
+	if cfg.Logger == nil {
+		cfg.Logger = glog.New().WithField("WebServe", "WebServe")
 	}
 	return server
 }

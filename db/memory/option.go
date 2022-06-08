@@ -11,7 +11,7 @@ import (
 
 type config struct {
 	ctx               context.Context
-	logger            glog.ILogger
+	logger            glog.ILoggerEntry
 	tracerServer      *tracer.Server
 	attrs             []attribute.KeyValue
 	defaultExpiration time.Duration
@@ -54,6 +54,6 @@ func WithAttributes(attrs ...string) Option {
 // WithLogger prevents logger.
 func WithLogger(logger glog.ILogger) Option {
 	return func(cfg *config) {
-		cfg.logger = logger
+		cfg.logger = logger.WithField("Cache-Memory", "Cache-Memory")
 	}
 }

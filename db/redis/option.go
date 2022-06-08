@@ -10,7 +10,7 @@ import (
 
 type config struct {
 	ctx      context.Context
-	logger   glog.ILogger
+	logger   glog.ILoggerEntry
 	tracer   *tracer.Server
 	attrs    []attribute.KeyValue
 	addr     string
@@ -48,7 +48,7 @@ func WithAttributes(attrs ...string) Option {
 // WithLogger prevents logger.
 func WithLogger(logger glog.ILogger) Option {
 	return func(cfg *config) {
-		cfg.logger = logger
+		cfg.logger = logger.WithField("Cache-Redis", "Cache-Redis")
 	}
 }
 

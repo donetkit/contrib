@@ -14,12 +14,12 @@ import (
 )
 
 type TracingHook struct {
-	logger       glog.ILogger
+	logger       glog.ILoggerEntry
 	tracerServer *tracerServer.Server
 	attrs        []attribute.KeyValue
 }
 
-func newTracingHook(logger glog.ILogger, tracerServer *tracerServer.Server, attrs []attribute.KeyValue) *TracingHook {
+func newTracingHook(logger glog.ILoggerEntry, tracerServer *tracerServer.Server, attrs []attribute.KeyValue) *TracingHook {
 	hook := &TracingHook{
 		logger:       logger,
 		tracerServer: tracerServer,

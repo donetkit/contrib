@@ -21,7 +21,7 @@ package gorm2
 //)
 //
 //type LogSql struct {
-//	Logger glog.ILogger
+//	Logger glog.ILoggerEntry
 //	config *sqlConfig
 //}
 //

@@ -18,7 +18,7 @@ type Server struct {
 	exit        chan struct{}
 	Ctx         context.Context
 	Tracer      *tracer.Server
-	Logger      glog.ILogger
+	Logger      glog.ILoggerEntry
 	ServiceName string
 	Version     string
 	protocol    string
@@ -32,7 +32,6 @@ func New(opts ...Option) *Server {
 		exit:        make(chan struct{}),
 		Ctx:         context.Background(),
 		ServiceName: "demo",
-		Logger:      glog.New(),
 		Version:     "V0.1",
 		protocol:    "serve",
 		pId:         os.Getpid(),
@@ -40,6 +39,9 @@ func New(opts ...Option) *Server {
 	}
 	for _, opt := range opts {
 		opt(server)
+	}
+	if server.Logger == nil {
+		server.Logger = glog.New().WithField("Serve", "Serve")
 	}
 	return server
 }

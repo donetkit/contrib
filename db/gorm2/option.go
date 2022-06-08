@@ -75,7 +75,7 @@ package gorm2
 //}
 //
 //// WithLogger prevents logger.
-//func WithLogger(logger glog.ILogger) Option {
+//func WithLogger(logger glog.ILoggerEntry) Option {
 //	return func(p *config) {
 //		p.sqlConfig.logger = logger
 //	}
