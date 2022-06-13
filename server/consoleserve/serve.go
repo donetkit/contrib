@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"github.com/donetkit/contrib-log/glog"
 	server2 "github.com/donetkit/contrib/server"
+	"github.com/donetkit/contrib/server/ctime"
 	"github.com/donetkit/contrib/server/systemsignal"
 	"github.com/donetkit/contrib/tracer"
 	"github.com/donetkit/contrib/utils/console_colors"
 	"github.com/donetkit/contrib/utils/files"
+	"github.com/shirou/gopsutil/v3/host"
 	"os"
 	"strconv"
 	"time"
@@ -100,6 +102,27 @@ func (s *Server) stop() error {
 
 func (s *Server) printLog() {
 	s.Logger.Info("======================================================================")
+	host, err := host.Info()
+	if err == nil {
+		s.Logger.Info(console_colors.Green("Loading System Info ..."))
+		s.Logger.Info(fmt.Sprintf("hostname                 :  %s", host.Hostname))
+		s.Logger.Info(fmt.Sprintf("uptime                   :  %s", ctime.ResolveTimeSecond(int(host.Uptime))))
+		s.Logger.Info(fmt.Sprintf("bootTime                 :  %s", time.Unix(int64(host.BootTime), 0).Format("2006/01/02 15:04:05")))
+		s.Logger.Info(fmt.Sprintf("procs                    :  %d", host.Procs))
+		s.Logger.Info(fmt.Sprintf("os                       :  %s", host.OS))
+		s.Logger.Info(fmt.Sprintf("platform                 :  %s", host.Platform))
+		s.Logger.Info(fmt.Sprintf("platformFamily           :  %s", host.PlatformFamily))
+		s.Logger.Info(fmt.Sprintf("platformVersion          :  %s", host.PlatformVersion))
+		s.Logger.Info(fmt.Sprintf("kernelVersion            :  %s", host.KernelVersion))
+		s.Logger.Info(fmt.Sprintf("kernelArch               :  %s", host.KernelArch))
+		if host.VirtualizationSystem != "" {
+			s.Logger.Info(fmt.Sprintf("virtualizationSystem     :  %s", host.VirtualizationSystem))
+		}
+		if host.VirtualizationRole != "" {
+			s.Logger.Info(fmt.Sprintf("virtualizationRole      :  %s", host.VirtualizationRole))
+		}
+		s.Logger.Info(fmt.Sprintf("hostId                   :  %s", host.HostID))
+	}
 	s.Logger.Info(console_colors.Green(fmt.Sprintf("Welcome to %s, starting application ...", s.ServiceName)))
 	s.Logger.Info(fmt.Sprintf("framework version        :  %s", console_colors.Blue(s.Version)))
 	s.Logger.Info(fmt.Sprintf("serve & protocol         :  %s", console_colors.Green(s.protocol)))

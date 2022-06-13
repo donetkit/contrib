@@ -6,11 +6,13 @@ import (
 	"github.com/donetkit/contrib-log/glog"
 	"github.com/donetkit/contrib/discovery"
 	server2 "github.com/donetkit/contrib/server"
+	"github.com/donetkit/contrib/server/ctime"
 	"github.com/donetkit/contrib/server/systemsignal"
 	"github.com/donetkit/contrib/tracer"
 	"github.com/donetkit/contrib/utils/console_colors"
 	"github.com/donetkit/contrib/utils/files"
-	"github.com/donetkit/contrib/utils/host"
+	chost "github.com/donetkit/contrib/utils/host"
+	"github.com/shirou/gopsutil/v3/host"
 	"net/http"
 	"os"
 	"strconv"
@@ -47,7 +49,7 @@ func New(opts ...Option) *Server {
 		exit:           make(chan struct{}),
 		Ctx:            context.Background(),
 		ServiceName:    "demo",
-		Host:           host.GetOutBoundIp(),
+		Host:           chost.GetOutBoundIp(),
 		Port:           80,
 		Version:        "V0.1",
 		protocol:       "HTTP API",
@@ -176,6 +178,27 @@ func (s *Server) stop() {
 
 func (s *Server) printLog() {
 	s.Options.Logger.Info("======================================================================")
+	host, err := host.Info()
+	if err == nil {
+		s.Options.Logger.Info(console_colors.Green("Loading System Info ..."))
+		s.Options.Logger.Info(fmt.Sprintf("hostname                 :  %s", host.Hostname))
+		s.Options.Logger.Info(fmt.Sprintf("uptime                   :  %s", ctime.ResolveTimeSecond(int(host.Uptime))))
+		s.Options.Logger.Info(fmt.Sprintf("bootTime                 :  %s", time.Unix(int64(host.BootTime), 0).Format("2006/01/02 15:04:05")))
+		s.Options.Logger.Info(fmt.Sprintf("procs                    :  %d", host.Procs))
+		s.Options.Logger.Info(fmt.Sprintf("os                       :  %s", host.OS))
+		s.Options.Logger.Info(fmt.Sprintf("platform                 :  %s", host.Platform))
+		s.Options.Logger.Info(fmt.Sprintf("platformFamily           :  %s", host.PlatformFamily))
+		s.Options.Logger.Info(fmt.Sprintf("platformVersion          :  %s", host.PlatformVersion))
+		s.Options.Logger.Info(fmt.Sprintf("kernelVersion            :  %s", host.KernelVersion))
+		s.Options.Logger.Info(fmt.Sprintf("kernelArch               :  %s", host.KernelArch))
+		if host.VirtualizationSystem != "" {
+			s.Options.Logger.Info(fmt.Sprintf("virtualizationSystem     :  %s", host.VirtualizationSystem))
+		}
+		if host.VirtualizationRole != "" {
+			s.Options.Logger.Info(fmt.Sprintf("virtualizationRole      :  %s", host.VirtualizationRole))
+		}
+		s.Options.Logger.Info(fmt.Sprintf("hostId                   :  %s", host.HostID))
+	}
 	s.Options.Logger.Info(console_colors.Green(fmt.Sprintf("Welcome to %s, starting application ...", s.Options.ServiceName)))
 	s.Options.Logger.Info(fmt.Sprintf("framework version        :  %s", console_colors.Blue(s.Options.Version)))
 	s.Options.Logger.Info(fmt.Sprintf("serve & protocol         :  %s", console_colors.Green(s.Options.protocol)))
