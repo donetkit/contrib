@@ -115,9 +115,11 @@ func (s *Server) printLog() {
 		s.Logger.Info(fmt.Sprintf("platformVersion          :  %s", host.PlatformVersion))
 		s.Logger.Info(fmt.Sprintf("kernelVersion            :  %s", host.KernelVersion))
 		s.Logger.Info(fmt.Sprintf("kernelArch               :  %s", host.KernelArch))
-		if host.VirtualizationSystem != "" {
-			s.Logger.Info(fmt.Sprintf("virtualizationSystem     :  %s", host.VirtualizationSystem))
+		var cpuType = "Virtual"
+		if host.VirtualizationSystem == "" {
+			cpuType = "Physical"
 		}
+		s.Logger.Info(fmt.Sprintf("virtualizationSystem     :  %s", cpuType))
 		if host.VirtualizationRole != "" {
 			s.Logger.Info(fmt.Sprintf("virtualizationRole      :  %s", host.VirtualizationRole))
 		}
