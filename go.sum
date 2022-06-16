@@ -24,8 +24,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f h1:lO4WD4F/rVNCu3HqELle0jiPLLBs70cWOduZpkS1E78=
 github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f/go.mod h1:cuUVRXasLTGF7a8hSLbxyZXjz+1KgoB3wDUb6vlszIc=
-github.com/donetkit/contrib-log v0.2.2 h1:isTUUHwWz+c3R3/xd2I4UtUaCTo4wA1TrXAoTZ84SEM=
-github.com/donetkit/contrib-log v0.2.2/go.mod h1:7zzkweDEB1lhMs4bhB2mj3gNr1ELpNVESrfECgJkVPk=
+github.com/donetkit/contrib-log v0.2.4 h1:LYOamKYMcyvsfDZ6U5/YS7ifxh4kwIHaJF0guH2IyR4=
+github.com/donetkit/contrib-log v0.2.4/go.mod h1:7zzkweDEB1lhMs4bhB2mj3gNr1ELpNVESrfECgJkVPk=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/fatih/color v1.9.0/go.mod h1:eQcE1qtQxscV5RaZvpXrrb8Drkc3/DdQ+uUYCNjL+zU=
 github.com/fatih/color v1.13.0 h1:8LOYc1KYPPmyKMuN8QV2DNRWNbLo6LZ0iLs8+mlH53w=
