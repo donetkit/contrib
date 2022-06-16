@@ -121,7 +121,7 @@ func (s *Server) printLog() {
 		}
 		s.Logger.Info(fmt.Sprintf("virtualizationSystem     :  %s", cpuType))
 		if host.VirtualizationRole != "" {
-			s.Logger.Info(fmt.Sprintf("virtualizationRole      :  %s", host.VirtualizationRole))
+			s.Logger.Info(fmt.Sprintf("virtualizationRole       :  %s", host.VirtualizationRole))
 		}
 		s.Logger.Info(fmt.Sprintf("hostId                   :  %s", host.HostID))
 	}
