@@ -379,23 +379,45 @@ func (c *Cache) Flush() {
 }
 
 func (c *Cache) LPush(key string, value interface{}) (int64, error) {
-	return 0, nil
+	//TODO implement me
+	panic("implement me")
 }
 func (c *Cache) RPop(key string) interface{} {
-	return nil
+	//TODO implement me
+	panic("implement me")
 }
 func (c *Cache) XRead(key string, value int64) (interface{}, error) {
-	return nil, nil
+	//TODO implement me
+	panic("implement me")
 }
 func (c *Cache) XAdd(key, id string, values []string) (string, error) {
-	return "", nil
+	//TODO implement me
+	panic("implement me")
 }
 func (c *Cache) XDel(key string, value string) (int64, error) {
-	return 0, nil
+	//TODO implement me
+	panic("implement me")
 }
 func (c *Cache) GetLock(key string, acquireTimeout, lockTimeOut time.Duration) (string, error) {
-	return "", nil
+	//TODO implement me
+	panic("implement me")
 }
 func (c *Cache) ReleaseLock(key string, value string) bool {
-	return false
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) ZAdd(s string, f float64, i interface{}) interface{} {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) ZRangeByScore(s string, i int64, i2 int64) ([]string, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) ZRem(s string, i ...interface{}) error {
+	//TODO implement me
+	panic("implement me")
 }
