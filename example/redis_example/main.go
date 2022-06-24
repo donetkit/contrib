@@ -19,13 +19,13 @@ func main() {
 	log := glog.New()
 	var traceServer *tracer.Server
 	fs := tracer.NewFallbackSampler(0.1)
-	tp, err := tracer.NewTracerProvider(service, "192.168.5.110", environment, 6831, fs)
+	tp, err := tracer.NewTracerProvider(service, "127.0.0.1", environment, 6831, fs)
 	if err == nil {
 		jaeger := tracer.Jaeger{}
 		traceServer = tracer.New(tracer.WithName(service), tracer.WithProvider(tp), tracer.WithPropagators(jaeger))
 	}
 
-	rdb := redisRedis.New(redisRedis.WithLogger(log), redisRedis.WithTracer(traceServer), redisRedis.WithAddr("192.168.5.110"), redisRedis.WithPassword("zxwP)O(I*u7y6t5"), redisRedis.WithDB(0))
+	rdb := redisRedis.New(redisRedis.WithLogger(log), redisRedis.WithTracer(traceServer), redisRedis.WithAddr("127.0.0.1"), redisRedis.WithPassword(""), redisRedis.WithDB(0))
 	if err := redisCommands(ctx, traceServer, rdb); err != nil {
 		log.Error(err.Error())
 		return
