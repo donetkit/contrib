@@ -1,7 +1,7 @@
 //go:build appengine
 // +build appengine
 
-package strings
+package internal
 
 func String(b []byte) string {
 	return string(b)

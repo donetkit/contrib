@@ -6,6 +6,7 @@ import (
 	"github.com/donetkit/contrib-log/glog"
 	tracerServer "github.com/donetkit/contrib/tracer"
 	"github.com/go-redis/redis/v8"
+
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	semconv "go.opentelemetry.io/otel/semconv/v1.10.0"
@@ -30,9 +31,9 @@ func newTracingHook(logger glog.ILoggerEntry, tracerServer *tracerServer.Server,
 
 func (h *TracingHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (context.Context, error) {
 	cmdName := getTraceFullName(cmd)
-	if h.logger != nil {
-		h.logger.Info(cmdName)
-	}
+	//if h.logger != nil {
+	//	h.logger.Info(cmdName)
+	//}
 	if h.tracerServer == nil {
 		return ctx, nil
 	}
@@ -52,9 +53,13 @@ func (h *TracingHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (conte
 }
 
 func (h *TracingHook) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
+	if h.logger != nil {
+		h.logger.Debugf("db:redis:%s ", cmd.String())
+	}
 	if h.tracerServer == nil {
 		return nil
 	}
+
 	span := trace.SpanFromContext(ctx)
 	if !span.IsRecording() {
 		return nil
@@ -69,9 +74,9 @@ func (h *TracingHook) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
 
 func (h *TracingHook) BeforeProcessPipeline(ctx context.Context, cmd []redis.Cmder) (context.Context, error) {
 	cmdName := getTraceFullNames(cmd)
-	if h.logger != nil {
-		h.logger.Info(cmdName)
-	}
+	//if h.logger != nil {
+	//	h.logger.Info(cmdName)
+	//}
 	if h.tracerServer == nil {
 		return ctx, nil
 	}
@@ -94,7 +99,12 @@ func (h *TracingHook) BeforeProcessPipeline(ctx context.Context, cmd []redis.Cmd
 	return ctx, nil
 }
 
-func (h *TracingHook) AfterProcessPipeline(ctx context.Context, cmd []redis.Cmder) error {
+func (h *TracingHook) AfterProcessPipeline(ctx context.Context, cmders []redis.Cmder) error {
+	if h.logger != nil {
+		for _, cmder := range cmders {
+			h.logger.Debugf("db:redis:%s ", cmder.String())
+		}
+	}
 	if h.tracerServer == nil {
 		return nil
 	}
@@ -103,8 +113,8 @@ func (h *TracingHook) AfterProcessPipeline(ctx context.Context, cmd []redis.Cmde
 		return nil
 	}
 	defer span.End()
-	span.SetName(getTraceFullNames(cmd))
-	if err := cmd[0].Err(); err != nil {
+	span.SetName(getTraceFullNames(cmders))
+	if err := cmders[0].Err(); err != nil {
 		h.recordError(ctx, span, err)
 	}
 	return nil
