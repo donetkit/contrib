@@ -6,6 +6,8 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
+const redisClientDBKey = "redisClientDBKey"
+
 var allClient []*redis.Client
 
 type Cache struct {

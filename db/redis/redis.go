@@ -53,8 +53,13 @@ func (h *TracingHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (conte
 }
 
 func (h *TracingHook) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
+	dbValue := ""
+	db, ok := ctx.Value(redisClientDBKey).(int)
+	if ok {
+		dbValue = fmt.Sprintf("[%d]", db)
+	}
 	if h.logger != nil {
-		h.logger.Debugf("db:redis:%s ", cmd.String())
+		h.logger.Debugf("db%s:redis:%s ", dbValue, cmd.String())
 	}
 	if h.tracerServer == nil {
 		return nil
@@ -100,9 +105,14 @@ func (h *TracingHook) BeforeProcessPipeline(ctx context.Context, cmd []redis.Cmd
 }
 
 func (h *TracingHook) AfterProcessPipeline(ctx context.Context, cmders []redis.Cmder) error {
+	dbValue := ""
+	db, ok := ctx.Value(redisClientDBKey).(int)
+	if ok {
+		dbValue = fmt.Sprintf("[%d]", db)
+	}
 	if h.logger != nil {
 		for _, cmder := range cmders {
-			h.logger.Debugf("db:redis:%s ", cmder.String())
+			h.logger.Debugf("db%s:redis:%s ", dbValue, cmder.String())
 		}
 	}
 	if h.tracerServer == nil {

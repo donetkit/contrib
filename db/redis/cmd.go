@@ -14,11 +14,13 @@ func (c *Cache) getInstance() *Cache {
 	if c.db < 0 || c.db > 15 {
 		c.db = 0
 	}
-	return &Cache{
+	cache := &Cache{
 		ctx:    c.config.ctx,
 		client: allClient[c.db],
 		config: c.config,
 	}
+	cache.ctx = context.WithValue(cache.ctx, redisClientDBKey, c.db)
+	return cache
 }
 
 func (c *Cache) WithDB(db int) cache.ICache {
@@ -39,7 +41,8 @@ func (c *Cache) WithContext(ctx context.Context) cache.ICache {
 }
 
 func (c *Cache) Get(key string) interface{} {
-	data, err := c.getInstance().client.Get(c.ctx, key).Bytes()
+	instance := c.getInstance()
+	data, err := instance.client.Get(instance.ctx, key).Bytes()
 	if err != nil {
 		return nil
 	}
@@ -51,7 +54,8 @@ func (c *Cache) Get(key string) interface{} {
 }
 
 func (c *Cache) GetString(key string) (string, error) {
-	data, err := c.getInstance().client.Get(c.ctx, key).Bytes()
+	instance := c.getInstance()
+	data, err := instance.client.Get(instance.ctx, key).Bytes()
 	if err != nil {
 		return "", err
 	}
@@ -63,18 +67,21 @@ func (c *Cache) Set(key string, val interface{}, timeout time.Duration) error {
 	if err != nil {
 		return err
 	}
-	return c.getInstance().client.Set(c.ctx, key, data, timeout).Err()
+	instance := c.getInstance()
+	return instance.client.Set(instance.ctx, key, data, timeout).Err()
 }
 
 //IsExist 判断key是否存在
 func (c *Cache) IsExist(key string) bool {
-	i := c.getInstance().client.Exists(c.ctx, key).Val()
+	instance := c.getInstance()
+	i := instance.client.Exists(instance.ctx, key).Val()
 	return i > 0
 }
 
 //Delete 删除
 func (c *Cache) Delete(key string) (int64, error) {
-	cmd := c.getInstance().client.Del(c.ctx, key)
+	instance := c.getInstance()
+	cmd := instance.client.Del(instance.ctx, key)
 	if cmd.Err() != nil {
 		return 0, cmd.Err()
 	}
@@ -83,7 +90,8 @@ func (c *Cache) Delete(key string) (int64, error) {
 
 // LPush 左进
 func (c *Cache) LPush(key string, values interface{}) (int64, error) {
-	cmd := c.getInstance().client.LPush(c.ctx, key, values)
+	instance := c.getInstance()
+	cmd := instance.client.LPush(instance.ctx, key, values)
 	if cmd.Err() != nil {
 		return 0, cmd.Err()
 	}
@@ -92,7 +100,8 @@ func (c *Cache) LPush(key string, values interface{}) (int64, error) {
 
 // RPop 右出
 func (c *Cache) RPop(key string) interface{} {
-	cmd := c.getInstance().client.RPop(c.ctx, key)
+	instance := c.getInstance()
+	cmd := instance.client.RPop(instance.ctx, key)
 	if cmd.Err() != nil {
 		return nil
 	}
@@ -108,12 +117,13 @@ func (c *Cache) XRead(key string, count int64) (interface{}, error) {
 	if count <= 0 {
 		count = 10
 	}
-	msg, err := c.getInstance().client.XRead(c.ctx, &redis.XReadArgs{
+	instance := c.getInstance()
+	msg, err := instance.client.XRead(instance.ctx, &redis.XReadArgs{
 		Streams: []string{key, "0"},
 		Count:   count,
 		Block:   10 * time.Millisecond,
 	}).Result()
-	//msg, err := c.getInstance().client.XReadStreams(c.ctx, key, fmt.Sprintf("%d", count)).Result()
+	//msg, err := instance.client.XReadStreams(instance.ctx, key, fmt.Sprintf("%d", count)).Result()
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +131,8 @@ func (c *Cache) XRead(key string, count int64) (interface{}, error) {
 }
 
 func (c *Cache) XAdd(key, id string, values []string) (string, error) {
-	id, err := c.getInstance().client.XAdd(c.ctx, &redis.XAddArgs{
+	instance := c.getInstance()
+	id, err := instance.client.XAdd(instance.ctx, &redis.XAddArgs{
 		Stream: key,
 		ID:     id,
 		Values: values,
@@ -133,7 +144,8 @@ func (c *Cache) XAdd(key, id string, values []string) (string, error) {
 }
 
 func (c *Cache) XDel(key string, id string) (int64, error) {
-	n, err := c.getInstance().client.XDel(c.ctx, key, id).Result()
+	instance := c.getInstance()
+	n, err := instance.client.XDel(instance.ctx, key, id).Result()
 	if err != nil {
 		return 0, err
 	}
@@ -146,12 +158,13 @@ func (c *Cache) GetLock(lockName string, acquireTimeout, lockTimeOut time.Durati
 	endTime := time.Now().Add(acquireTimeout).UnixNano()
 	//for util.FwTimer.CalcMillis(time.Now()) <= endTime {
 	for time.Now().UnixNano() <= endTime {
-		if success, err := c.getInstance().client.SetNX(c.ctx, lockName, code, lockTimeOut).Result(); err != nil && err != redis.Nil {
+		instance := c.getInstance()
+		if success, err := instance.client.SetNX(instance.ctx, lockName, code, lockTimeOut).Result(); err != nil && err != redis.Nil {
 			return "", err
 		} else if success {
 			return code, nil
-		} else if c.getInstance().client.TTL(c.ctx, lockName).Val() == -1 {
-			c.getInstance().client.Expire(c.ctx, lockName, lockTimeOut)
+		} else if instance.client.TTL(instance.ctx, lockName).Val() == -1 {
+			instance.client.Expire(instance.ctx, lockName, lockTimeOut)
 		}
 		time.Sleep(time.Millisecond)
 	}
@@ -159,13 +172,14 @@ func (c *Cache) GetLock(lockName string, acquireTimeout, lockTimeOut time.Durati
 }
 
 func (c *Cache) ReleaseLock(lockName, code string) bool {
+	instance := c.getInstance()
 	txf := func(tx *redis.Tx) error {
-		if v, err := tx.Get(c.ctx, lockName).Result(); err != nil && err != redis.Nil {
+		if v, err := tx.Get(instance.ctx, lockName).Result(); err != nil && err != redis.Nil {
 			return err
 		} else if v == code {
-			_, err := tx.Pipelined(c.ctx, func(pipe redis.Pipeliner) error {
+			_, err := tx.Pipelined(instance.ctx, func(pipe redis.Pipeliner) error {
 				//count++
-				pipe.Del(c.ctx, lockName)
+				pipe.Del(instance.ctx, lockName)
 				return nil
 			})
 			return err
@@ -173,7 +187,7 @@ func (c *Cache) ReleaseLock(lockName, code string) bool {
 		return nil
 	}
 	for {
-		if err := c.getInstance().client.Watch(c.ctx, txf, lockName); err == nil {
+		if err := instance.client.Watch(instance.ctx, txf, lockName); err == nil {
 			return true
 		} else if err == redis.TxFailedErr {
 			c.config.logger.Errorf("watch key is modified, retry to release lock. err: %s", err.Error())
@@ -185,7 +199,8 @@ func (c *Cache) ReleaseLock(lockName, code string) bool {
 }
 
 func (c *Cache) Increment(key string, value int64) (int64, error) {
-	cmd := c.getInstance().client.IncrBy(c.ctx, key, value)
+	instance := c.getInstance()
+	cmd := instance.client.IncrBy(instance.ctx, key, value)
 	if cmd.Err() != nil {
 		return 0, cmd.Err()
 	}
@@ -193,7 +208,8 @@ func (c *Cache) Increment(key string, value int64) (int64, error) {
 }
 
 func (c *Cache) IncrementFloat(key string, value float64) (float64, error) {
-	cmd := c.getInstance().client.IncrByFloat(c.ctx, key, value)
+	instance := c.getInstance()
+	cmd := instance.client.IncrByFloat(instance.ctx, key, value)
 	if cmd.Err() != nil {
 		return 0, cmd.Err()
 	}
@@ -201,7 +217,8 @@ func (c *Cache) IncrementFloat(key string, value float64) (float64, error) {
 }
 
 func (c *Cache) Decrement(key string, value int64) (int64, error) {
-	cmd := c.getInstance().client.DecrBy(c.ctx, key, value)
+	instance := c.getInstance()
+	cmd := instance.client.DecrBy(instance.ctx, key, value)
 	if cmd.Err() != nil {
 		return 0, cmd.Err()
 	}
@@ -209,7 +226,8 @@ func (c *Cache) Decrement(key string, value int64) (int64, error) {
 }
 
 func (c *Cache) Flush() {
-	c.getInstance().client.FlushAll(c.ctx)
+	instance := c.getInstance()
+	instance.client.FlushAll(c.ctx)
 }
 
 func (c *Cache) ZAdd(key string, score float64, member interface{}) interface{} {
@@ -217,7 +235,8 @@ func (c *Cache) ZAdd(key string, score float64, member interface{}) interface{} 
 	//XX: 添加元素时，如果元素存在，执行修改，如果不存在，则失败。
 	//CH：修改元素分数，后面可以接多个score member
 	//INCR: 和 ZINCRBY 一样的效果，可以指定某一个元素，给它的分数进行加减操作
-	cmd := c.getInstance().client.ZAdd(c.ctx, key, &redis.Z{Score: score, Member: member})
+	instance := c.getInstance()
+	cmd := instance.client.ZAdd(instance.ctx, key, &redis.Z{Score: score, Member: member})
 	if cmd.Err() != nil {
 		return cmd.Err()
 	}
@@ -225,7 +244,8 @@ func (c *Cache) ZAdd(key string, score float64, member interface{}) interface{} 
 }
 
 func (c *Cache) ZRangeByScore(key string, min, max int64) ([]string, error) {
-	cmd := c.getInstance().client.ZRangeByScore(c.ctx, key, &redis.ZRangeBy{
+	instance := c.getInstance()
+	cmd := instance.client.ZRangeByScore(instance.ctx, key, &redis.ZRangeBy{
 		Min: fmt.Sprintf("%d", min),
 		Max: fmt.Sprintf("%d", max),
 	})
@@ -236,7 +256,8 @@ func (c *Cache) ZRangeByScore(key string, min, max int64) ([]string, error) {
 }
 
 func (c *Cache) ZRem(key string, members ...interface{}) error {
-	cmd := c.getInstance().client.ZRem(c.ctx, key, members)
+	instance := c.getInstance()
+	cmd := instance.client.ZRem(instance.ctx, key, members)
 	if cmd.Err() != nil {
 		return cmd.Err()
 	}
