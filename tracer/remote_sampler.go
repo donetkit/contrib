@@ -1,6 +1,7 @@
 package tracer
 
 import (
+	"github.com/donetkit/contrib/tracer/internal"
 	"github.com/go-logr/logr"
 	"time"
 )
