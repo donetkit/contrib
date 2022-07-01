@@ -1,8 +1,8 @@
 package tracer
 
 import (
+	"github.com/donetkit/contrib-log/glog"
 	"github.com/donetkit/contrib/tracer/internal"
-	"github.com/go-logr/logr"
 	"time"
 )
 
@@ -20,10 +20,8 @@ type remoteSampler struct {
 
 	serviceName string
 
-	cloudPlatform string
-
 	fallbackSampler *FallbackSampler
 
 	// logger for logging.
-	logger logr.Logger
+	logger glog.ILogger
 }

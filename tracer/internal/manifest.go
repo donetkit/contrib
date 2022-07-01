@@ -1,7 +1,7 @@
 package internal
 
 import (
-	"github.com/go-logr/logr"
+	"github.com/donetkit/contrib-log/glog"
 	"sync"
 	"time"
 )
@@ -12,12 +12,10 @@ const version = 1
 // Manifest represents a full sampling ruleset and provides
 // options for configuring Logger, Clock and xrayClient.
 type Manifest struct {
-	Rules                          []Rule
 	SamplingTargetsPollingInterval time.Duration
 	refreshedAt                    time.Time
 	xrayClient                     *xrayClient
-	clientID                       *string
-	logger                         logr.Logger
+	logger                         glog.ILogger
 	clock                          clock
 	mu                             sync.RWMutex
 }
