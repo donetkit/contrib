@@ -82,9 +82,6 @@ type samplingTargetDocument struct {
 
 	// The reservoir quota expires.
 	ReservoirQuotaTTL *float64 `json:"ReservoirQuotaTTL,omitempty"`
-
-	// The name of the sampling rule.
-	RuleName *string `json:"RuleName,omitempty"`
 }
 
 // newClient returns an HTTP client with proxy endpoint.
