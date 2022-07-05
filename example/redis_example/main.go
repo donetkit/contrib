@@ -6,6 +6,8 @@ import (
 	redisRedis "github.com/donetkit/contrib/db/redis"
 	"github.com/donetkit/contrib/tracer"
 	"github.com/donetkit/contrib/utils/cache"
+	"net/url"
+	"time"
 )
 
 const (
@@ -18,8 +20,16 @@ func main() {
 
 	log := glog.New()
 	var traceServer *tracer.Server
-	fs := tracer.NewFallbackSampler(0.1)
-	tp, err := tracer.NewTracerProvider(service, "127.0.0.1", environment, 6831, fs)
+	//fs := tracer.NewFallbackSampler(0.1)
+
+	url1, _ := url.Parse("http://127.0.0.1")
+
+	rs, err := tracer.NewRemoteSampler(ctx, service, 0.05, tracer.WithLogger(log), tracer.WithSamplingRulesPollingInterval(time.Second*10), tracer.WithEndpoint(*url1))
+	if err == nil {
+
+	}
+
+	tp, err := tracer.NewTracerProvider(service, "127.0.0.1", environment, 6831, rs)
 	if err == nil {
 		jaeger := tracer.Jaeger{}
 		traceServer = tracer.New(tracer.WithName(service), tracer.WithProvider(tp), tracer.WithPropagators(jaeger))
@@ -30,6 +40,17 @@ func main() {
 		log.Error(err.Error())
 		return
 	}
+
+	for {
+		time.Sleep(time.Second * 5)
+		if err := redisCommands(ctx, traceServer, rdb); err != nil {
+			log.Error(err.Error())
+			return
+		}
+	}
+
+	time.Sleep(time.Hour)
+
 }
 func redisCommands(ctx context.Context, traceServer *tracer.Server, rdb cache.ICache) error {
 	ctx, span := traceServer.Tracer.Start(ctx, "cache")
