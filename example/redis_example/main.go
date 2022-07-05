@@ -6,7 +6,6 @@ import (
 	redisRedis "github.com/donetkit/contrib/db/redis"
 	"github.com/donetkit/contrib/tracer"
 	"github.com/donetkit/contrib/utils/cache"
-	"net/url"
 	"time"
 )
 
@@ -20,16 +19,16 @@ func main() {
 
 	log := glog.New()
 	var traceServer *tracer.Server
-	//fs := tracer.NewFallbackSampler(0.1)
+	fs := tracer.NewFallbackSampler(0.1)
 
-	url1, _ := url.Parse("http://127.0.0.1")
+	//url1, _ := url.Parse("http://127.0.0.1")
+	//
+	//rs, err := tracer.NewRemoteSampler(ctx, service, 0.05, tracer.WithLogger(log), tracer.WithSamplingRulesPollingInterval(time.Second*10), tracer.WithEndpoint(*url1))
+	//if err == nil {
+	//
+	//}
 
-	rs, err := tracer.NewRemoteSampler(ctx, service, 0.05, tracer.WithLogger(log), tracer.WithSamplingRulesPollingInterval(time.Second*10), tracer.WithEndpoint(*url1))
-	if err == nil {
-
-	}
-
-	tp, err := tracer.NewTracerProvider(service, "127.0.0.1", environment, 6831, rs)
+	tp, err := tracer.NewTracerProvider(service, "127.0.0.1", environment, 6831, fs)
 	if err == nil {
 		jaeger := tracer.Jaeger{}
 		traceServer = tracer.New(tracer.WithName(service), tracer.WithProvider(tp), tracer.WithPropagators(jaeger))
