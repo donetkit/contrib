@@ -19,20 +19,25 @@ func main() {
 
 	log := glog.New()
 	var traceServer *tracer.Server
+
+	// 1
 	fs := tracer.NewFallbackSampler(0.1)
-
-	//url1, _ := url.Parse("http://127.0.0.1")
-	//
-	//rs, err := tracer.NewRemoteSampler(ctx, service, 0.05, tracer.WithLogger(log), tracer.WithSamplingRulesPollingInterval(time.Second*10), tracer.WithEndpoint(*url1))
-	//if err == nil {
-	//
-	//}
-
 	tp, err := tracer.NewTracerProvider(service, "127.0.0.1", environment, 6831, fs)
 	if err == nil {
 		jaeger := tracer.Jaeger{}
 		traceServer = tracer.New(tracer.WithName(service), tracer.WithProvider(tp), tracer.WithPropagators(jaeger))
 	}
+
+	// 2
+	//url1, _ := url.Parse("http://127.0.0.1")
+	//rs, err := tracer.NewRemoteSampler(ctx, service, 0.05, tracer.WithLogger(log), tracer.WithSamplingRulesPollingInterval(time.Second*10), tracer.WithEndpoint(*url1))
+	//if err == nil {
+	//	tp, err := tracer.NewTracerProvider(service, "127.0.0.1", environment, 6831, rs)
+	//	if err == nil {
+	//		jaeger := tracer.Jaeger{}
+	//		traceServer = tracer.New(tracer.WithName(service), tracer.WithProvider(tp), tracer.WithPropagators(jaeger))
+	//	}
+	//}
 
 	rdb := redisRedis.New(redisRedis.WithLogger(log), redisRedis.WithTracer(traceServer), redisRedis.WithAddr("127.0.0.1"), redisRedis.WithPassword(""), redisRedis.WithDB(0))
 	if err := redisCommands(ctx, traceServer, rdb); err != nil {
