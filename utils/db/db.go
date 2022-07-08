@@ -48,6 +48,7 @@ type IDB interface {
 
 	// Limit specify the number of records to be retrieved
 	Limit(limit int) IDB
+
 	// Offset specify the number of records to skip before starting to return the records
 	Offset(offset int) IDB
 
