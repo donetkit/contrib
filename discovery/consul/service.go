@@ -7,9 +7,35 @@ import (
 	"github.com/donetkit/contrib/utils/uuid"
 	consulApi "github.com/hashicorp/consul/api"
 	"github.com/pkg/errors"
+	"net"
 	"os"
 	"time"
 )
+
+/*
+GRPC
+
+["trace.enable=true",
+"prometheus.enable=true",
+"traefik.enable=true",
+"traefik.http.routers.[ServiceName].middlewares=request-retry@file",
+"traefik.http.routers.[ServiceName].rule=PathPrefix(`/[ApiVersion]`)",
+"traefik.http.routers.[ServiceName].entryPoints=web",
+"traefik.http.services.[ServiceName].loadbalancer.server.scheme=h2c"
+]
+
+HTTP
+
+["trace.enable=true",
+"prometheus.enable=true",
+"traefik.enable=true",
+"traefik.http.routers.[ServiceName].middlewares=request-retry@file",
+"traefik.http.routers.[ServiceName].rule=PathPrefix(`/[ApiVersion]/`)",
+"traefik.http.routers.[ServiceName].entryPoints=web",
+"traefik.http.routers.[ServiceName].priority=[ServiceTimeStamp]"
+]
+
+*/
 
 type Client struct {
 	client  *consulApi.Client
@@ -29,6 +55,7 @@ func New(opts ...discovery.Option) (*Client, error) {
 		DeregisterTime: 15,
 		TimeOut:        3,
 		CheckResponse:  &discovery.CheckResponse{RetryCount: 3},
+		CheckType:      "TCP",
 	}
 	cfg.CheckResponse.SetHealthy("Healthy")
 	cfg.HttpRouter = func(r *discovery.CheckResponse) {}
@@ -54,19 +81,70 @@ func (s *Client) SetTags(tags ...string) {
 
 func (s *Client) checkHealthyStatus() {
 	if s.options.CheckHealthyStatus {
-		go func() {
-			time.Sleep(time.Second * 5)
-			ticker := time.NewTicker(time.Duration(s.options.IntervalTime) * time.Second)
-			for {
-				select {
-				case <-ticker.C:
-					var timeNow = time.Now().Add(time.Duration(s.options.IntervalTime*s.options.CheckResponse.RetryCount)*time.Second*-1).UnixNano() / 1000 / 1000
-					if timeNow > s.options.CheckResponse.GetOnTime() {
-						ticker.Stop()
-						os.Exit(3)
-					}
+		switch s.options.CheckType {
+		case "HTTP":
+			s.checkHealthyHttp()
+		case "TCP":
+			s.checkHealthyTCP()
+		case "GRPC":
+			s.checkHealthyGRPC()
+		}
+	}
+
+}
+
+func (s *Client) checkHealthyHttp() {
+	go func() {
+		time.Sleep(time.Second * 5)
+		ticker := time.NewTicker(time.Duration(s.options.IntervalTime) * time.Second)
+		for {
+			select {
+			case <-ticker.C:
+				var timeNow = time.Now().Add(time.Duration(s.options.IntervalTime*s.options.CheckResponse.RetryCount)*time.Second*-1).UnixNano() / 1000 / 1000
+				if timeNow > s.options.CheckResponse.GetOnTime() {
+					ticker.Stop()
+					os.Exit(3)
 				}
 			}
-		}()
-	}
+		}
+	}()
+}
+
+func (s *Client) checkHealthyTCP() {
+	go func() {
+		time.Sleep(time.Second * 5)
+		ticker := time.NewTicker(time.Duration(s.options.IntervalTime) * time.Second)
+		for {
+			select {
+			case <-ticker.C:
+				conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", s.options.CheckAddr, s.options.CheckPort), 3*time.Second)
+				if err == nil {
+					conn.Close()
+					s.options.CheckResponse.Result()
+				}
+				var timeNow = time.Now().Add(time.Duration(s.options.IntervalTime*s.options.CheckResponse.RetryCount)*time.Second*-1).UnixNano() / 1000 / 1000
+				if timeNow > s.options.CheckResponse.GetOnTime() {
+					ticker.Stop()
+					os.Exit(3)
+				}
+			}
+		}
+	}()
+}
+
+func (s *Client) checkHealthyGRPC() {
+	go func() {
+		time.Sleep(time.Second * 5)
+		ticker := time.NewTicker(time.Duration(s.options.IntervalTime) * time.Second)
+		for {
+			select {
+			case <-ticker.C:
+				var timeNow = time.Now().Add(time.Duration(s.options.IntervalTime*s.options.CheckResponse.RetryCount)*time.Second*-1).UnixNano() / 1000 / 1000
+				if timeNow > s.options.CheckResponse.GetOnTime() {
+					ticker.Stop()
+					os.Exit(3)
+				}
+			}
+		}
+	}()
 }

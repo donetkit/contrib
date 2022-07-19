@@ -116,6 +116,21 @@ func WithEnableHealthyStatus() Option {
 	}
 }
 
+// WithCheckType  检查类型 HTTP TCP GRPC
+func WithCheckType(checkType string) Option {
+	return func(cfg *Config) {
+		cfg.CheckType = checkType
+	}
+}
+
+// WithCheckTCP set checkHttp function r.GET(url, func(c *gin.Context) { c.String(200, "Healthy") })
+func WithCheckTCP() Option {
+	return func(cfg *Config) {
+		cfg.CheckType = "TCP"
+		cfg.CheckPath = fmt.Sprintf("%s:%d", cfg.CheckAddr, cfg.CheckPort)
+	}
+}
+
 // WithCheckHTTP set checkHttp function r.GET(url, func(c *gin.Context) { c.String(200, "Healthy") })
 func WithCheckHTTP(router HttpRouter, checkHttp ...string) Option {
 	return func(cfg *Config) {
@@ -124,8 +139,25 @@ func WithCheckHTTP(router HttpRouter, checkHttp ...string) Option {
 		if len(checkHttp) > 0 {
 			url = checkHttp[0]
 		}
-		cfg.CheckHTTP = url
-		cfg.CheckHTTP = fmt.Sprintf("http://%s:%d%s", cfg.CheckAddr, cfg.CheckPort, url)
+		cfg.CheckType = "HTTP"
+		cfg.CheckPath = url
+		cfg.CheckPath = fmt.Sprintf("http://%s:%d%s", cfg.CheckAddr, cfg.CheckPort, url)
+		cfg.CheckResponse.Url = url
+		cfg.HttpRouter(cfg.CheckResponse)
+	}
+}
+
+// WithCheckGrpc set checkHttp function r.GET(url, func(c *gin.Context) { c.String(200, "Healthy") })
+func WithCheckGrpc(router HttpRouter, checkPath ...string) Option {
+	return func(cfg *Config) {
+		cfg.HttpRouter = router
+		var url = fmt.Sprintf("/health/%s.health", cfg.Id)
+		if len(checkPath) > 0 {
+			url = checkPath[0]
+		}
+		cfg.CheckType = "GRPC"
+		cfg.CheckPath = url
+		cfg.CheckPath = fmt.Sprintf("%v:%v/%v", cfg.CheckAddr, cfg.CheckPort, url)
 		cfg.CheckResponse.Url = url
 		cfg.HttpRouter(cfg.CheckResponse)
 	}
