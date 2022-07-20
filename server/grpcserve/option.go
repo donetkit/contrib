@@ -2,6 +2,7 @@ package grpcserve
 
 import (
 	"github.com/donetkit/contrib-log/glog"
+	"google.golang.org/grpc"
 )
 
 // Option for queue system
@@ -61,7 +62,7 @@ func WithPort(port int) Option {
 // WithLogger set logger function
 func WithLogger(logger glog.ILogger) Option {
 	return func(cfg *config) {
-		cfg.Logger = logger.WithField("WebServe", "WebServe")
+		cfg.Logger = logger.WithField("GrpcServe", "GrpcServe")
 	}
 }
 
@@ -76,5 +77,23 @@ func WithVersion(version string) Option {
 func WithProtocol(protocol string) Option {
 	return func(cfg *config) {
 		cfg.protocol = protocol
+	}
+}
+
+// WithGrpcServerOptions set grpc.ServerOption function
+func WithGrpcServerOptions(grpcOpts ...grpc.ServerOption) Option {
+	return func(cfg *config) {
+		for _, grpcOpt := range grpcOpts {
+			cfg.grpcOpts = append(cfg.grpcOpts, grpcOpt)
+		}
+	}
+}
+
+// WithGrpcServerOption set grpc.ServerOption function
+func WithGrpcServerOption(grpcOpt grpc.ServerOption) Option {
+	return func(cfg *config) {
+		if grpcOpt != nil {
+			cfg.grpcOpts = append(cfg.grpcOpts, grpcOpt)
+		}
 	}
 }

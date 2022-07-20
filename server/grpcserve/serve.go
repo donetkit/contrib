@@ -50,6 +50,8 @@ type config struct {
 	connectionTimeout     time.Duration
 	writeBufferSize       int
 	readBufferSize        int
+
+	grpcOpts []grpc.ServerOption
 }
 
 type Server struct {
@@ -75,6 +77,7 @@ func New(opts ...Option) *Server {
 
 		writeBufferSize: defaultWriteBufSize,
 		readBufferSize:  defaultReadBufSize,
+		grpcOpts:        []grpc.ServerOption{},
 	}
 	for _, opt := range opts {
 		opt(cfg)
@@ -83,13 +86,23 @@ func New(opts ...Option) *Server {
 		Options: cfg,
 	}
 	if cfg.Logger == nil {
-		cfg.Logger = glog.New().WithField("WebServe", "WebServe")
+		cfg.Logger = glog.New().WithField("GrpcServe", "GrpcServe")
 	}
-	cfg.GServer = grpc.NewServer(grpc.WriteBufferSize(cfg.writeBufferSize),
+
+	gOpts := []grpc.ServerOption{
+		grpc.WriteBufferSize(cfg.writeBufferSize),
 		grpc.ReadBufferSize(cfg.readBufferSize),
 		grpc.ConnectionTimeout(cfg.connectionTimeout),
 		grpc.MaxRecvMsgSize(cfg.maxReceiveMessageSize),
-		grpc.MaxSendMsgSize(cfg.maxSendMessageSize))
+		grpc.MaxSendMsgSize(cfg.maxSendMessageSize)}
+
+	for _, grpcOpt := range cfg.grpcOpts {
+		gOpts = append(gOpts, grpcOpt)
+	}
+	cfg.grpcOpts = gOpts
+
+	//cfg.GServer = grpc.NewServer(gOpts...)
+
 	return server
 }
 
@@ -140,6 +153,11 @@ func (s *Server) AddTrace(tracer *tracer.Server) *Server {
 	return s
 }
 
+func (s *Server) NewServer() *Server {
+	s.Options.GServer = grpc.NewServer(s.Options.grpcOpts...)
+	return s
+}
+
 func (s *Server) Run() {
 	addr := fmt.Sprintf("%s:%d", s.Options.Host, s.Options.Port)
 	lis, err := net.Listen("tcp", addr)
@@ -147,7 +165,6 @@ func (s *Server) Run() {
 		s.Options.Logger.Error(err)
 		os.Exit(0)
 	}
-
 	go func() {
 		if err := s.Options.GServer.Serve(lis); err != nil && err != grpc.ErrServerStopped {
 			return
@@ -226,4 +243,18 @@ func (s *Server) printLog() {
 	s.Options.Logger.Info(fmt.Sprintf("running in %s mode , change (Dev,Test,Prod) mode by Environment .", console_colors.Red(s.Options.environment)))
 	s.Options.Logger.Info(console_colors.Green("Server is Started."))
 	s.Options.Logger.Info("======================================================================")
+}
+
+// AddGrpcServerOptions set grpc.ServerOption function
+func (s *Server) AddGrpcServerOptions(grpcOpts ...grpc.ServerOption) *Server {
+	for _, grpcOpt := range grpcOpts {
+		s.Options.grpcOpts = append(s.Options.grpcOpts, grpcOpt)
+	}
+	return s
+}
+
+// AddGrpcServerOption set grpc.ServerOption function
+func (s *Server) AddGrpcServerOption(grpcOpt grpc.ServerOption) *Server {
+	s.Options.grpcOpts = append(s.Options.grpcOpts, grpcOpt)
+	return s
 }
