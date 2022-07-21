@@ -3,6 +3,7 @@ package grpcserve
 import (
 	"github.com/donetkit/contrib-log/glog"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 // Option for queue system
@@ -94,6 +95,15 @@ func WithGrpcServerOption(grpcOpt grpc.ServerOption) Option {
 	return func(cfg *config) {
 		if grpcOpt != nil {
 			cfg.grpcOpts = append(cfg.grpcOpts, grpcOpt)
+		}
+	}
+}
+
+// WithTransportCredentials set credentials.TransportCredentials function
+func WithTransportCredentials(credentials credentials.TransportCredentials) Option {
+	return func(cfg *config) {
+		if credentials != nil {
+			cfg.credentials = credentials
 		}
 	}
 }

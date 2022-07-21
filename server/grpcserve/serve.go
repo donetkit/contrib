@@ -14,6 +14,7 @@ import (
 	chost "github.com/donetkit/contrib/utils/host"
 	"github.com/shirou/gopsutil/v3/host"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"math"
 	"net"
 	"os"
@@ -44,6 +45,8 @@ type config struct {
 	environment     string
 	runMode         string
 	GServer         *grpc.Server
+
+	credentials credentials.TransportCredentials
 
 	maxReceiveMessageSize int
 	maxSendMessageSize    int
@@ -95,6 +98,10 @@ func New(opts ...Option) *Server {
 		grpc.ConnectionTimeout(cfg.connectionTimeout),
 		grpc.MaxRecvMsgSize(cfg.maxReceiveMessageSize),
 		grpc.MaxSendMsgSize(cfg.maxSendMessageSize)}
+
+	if cfg.credentials != nil {
+		gOpts = append(gOpts, grpc.Creds(cfg.credentials))
+	}
 
 	for _, grpcOpt := range cfg.grpcOpts {
 		gOpts = append(gOpts, grpcOpt)
