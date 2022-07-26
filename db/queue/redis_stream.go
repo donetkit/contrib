@@ -6,7 +6,6 @@ import (
 	"github.com/donetkit/contrib-log/glog"
 	"github.com/go-redis/redis/v8"
 	"github.com/shirou/gopsutil/v3/host"
-	"os"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -71,7 +70,7 @@ type RedisStream struct {
 func NewRedisStream(client *redis.Client, key string, logger glog.ILogger) *RedisStream {
 	host, _ := host.Info()
 	return &RedisStream{
-		consumer:      fmt.Sprintf("%s@%d", host.Hostname, os.Getpid()),
+		consumer:      fmt.Sprintf("%s", host.Hostname), // fmt.Sprintf("%s@%d", host.Hostname, os.Getpid()),
 		key:           key,
 		RetryInterval: 60,
 		PrimitiveKey:  "__data",
@@ -631,9 +630,11 @@ func (r *RedisStream) TakeMessageAsync(count int64, timeout int64) []redis.XMess
 		r.GroupSetId(r.Group, "$")
 		atomic.AddInt64(&r.setGroupId, 1)
 	}
+
 	if !(len(group) == 0) {
 		r.RetryAck()
 	}
+
 	var messages []redis.XMessage
 	var rs []redis.XStream
 	var t = timeout * 1000

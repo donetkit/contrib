@@ -30,7 +30,12 @@ func newTracingHook(logger glog.ILoggerEntry, tracerServer *tracerServer.Server,
 }
 
 func (h *TracingHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (context.Context, error) {
-	cmdName := getTraceFullName(cmd)
+	dbValue := ""
+	db, ok := ctx.Value(redisClientDBKey).(int)
+	if ok {
+		dbValue = fmt.Sprintf("[%d]", db)
+	}
+	cmdName := getTraceFullName(cmd, dbValue)
 	//if h.logger != nil {
 	//	h.logger.Info(cmdName)
 	//}
@@ -70,7 +75,7 @@ func (h *TracingHook) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
 		return nil
 	}
 	defer span.End()
-	span.SetName(getTraceFullName(cmd))
+	span.SetName(getTraceFullName(cmd, dbValue))
 	if err := cmd.Err(); err != nil {
 		h.recordError(ctx, span, err)
 	}
@@ -78,7 +83,12 @@ func (h *TracingHook) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
 }
 
 func (h *TracingHook) BeforeProcessPipeline(ctx context.Context, cmd []redis.Cmder) (context.Context, error) {
-	cmdName := getTraceFullNames(cmd)
+	dbValue := ""
+	db, ok := ctx.Value(redisClientDBKey).(int)
+	if ok {
+		dbValue = fmt.Sprintf("[%d]", db)
+	}
+	cmdName := getTraceFullNames(cmd, dbValue)
 	//if h.logger != nil {
 	//	h.logger.Info(cmdName)
 	//}
@@ -104,15 +114,15 @@ func (h *TracingHook) BeforeProcessPipeline(ctx context.Context, cmd []redis.Cmd
 	return ctx, nil
 }
 
-func (h *TracingHook) AfterProcessPipeline(ctx context.Context, cmders []redis.Cmder) error {
+func (h *TracingHook) AfterProcessPipeline(ctx context.Context, cmder []redis.Cmder) error {
 	dbValue := ""
 	db, ok := ctx.Value(redisClientDBKey).(int)
 	if ok {
 		dbValue = fmt.Sprintf("[%d]", db)
 	}
 	if h.logger != nil {
-		for _, cmder := range cmders {
-			h.logger.Debugf("db%s:redis:%s ", dbValue, cmder.String())
+		for _, c := range cmder {
+			h.logger.Debugf("db%s:redis:%s ", dbValue, c.String())
 		}
 	}
 	if h.tracerServer == nil {
@@ -123,8 +133,8 @@ func (h *TracingHook) AfterProcessPipeline(ctx context.Context, cmders []redis.C
 		return nil
 	}
 	defer span.End()
-	span.SetName(getTraceFullNames(cmders))
-	if err := cmders[0].Err(); err != nil {
+	span.SetName(getTraceFullNames(cmder, dbValue))
+	if err := cmder[0].Err(); err != nil {
 		h.recordError(ctx, span, err)
 	}
 	return nil
@@ -140,32 +150,32 @@ func (h *TracingHook) recordError(ctx context.Context, span trace.Span, err erro
 	}
 }
 
-func getTraceFullName(cmd redis.Cmder) string {
+func getTraceFullName(cmd redis.Cmder, dbValue string) string {
 	var args = cmd.Args()
 	switch name := cmd.Name(); name {
 	case "cluster", "command":
 		if len(args) == 1 {
-			return fmt.Sprintf("db:redis:%s", name)
+			return fmt.Sprintf("db%s:redis:%s", dbValue, name)
 		}
 		if s2, ok := args[1].(string); ok {
-			return fmt.Sprintf("db:redis:%s => %s", name, s2)
+			return fmt.Sprintf("db%s:redis:%s => %s", dbValue, name, s2)
 		}
-		return fmt.Sprintf("db:redis:%s", name)
+		return fmt.Sprintf("db%s:redis:%s", dbValue, name)
 	default:
 		if len(args) == 1 {
-			return fmt.Sprintf("db:redis:%s", name)
+			return fmt.Sprintf("db%s:redis:%s", dbValue, name)
 		}
 		if s2, ok := args[1].(string); ok {
-			return fmt.Sprintf("db:redis:%s => %s", name, s2)
+			return fmt.Sprintf("db%s:redis:%s => %s", dbValue, name, s2)
 		}
-		return fmt.Sprintf("db:redis:%s", name)
+		return fmt.Sprintf("db%s:redis:%s", dbValue, name)
 	}
 }
 
-func getTraceFullNames(cmd []redis.Cmder) string {
+func getTraceFullNames(cmd []redis.Cmder, dbValue string) string {
 	var cmdStr []string
 	for _, c := range cmd {
-		cmdStr = append(cmdStr, getTraceFullName(c))
+		cmdStr = append(cmdStr, getTraceFullName(c, dbValue))
 	}
 	return strings.Join(cmdStr, ", ")
 }
