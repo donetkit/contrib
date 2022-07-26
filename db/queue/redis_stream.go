@@ -634,6 +634,7 @@ func (r *RedisStream) TakeMessageAsync(count int64, timeout int64) []redis.XMess
 	if !(len(group) == 0) {
 		r.RetryAck()
 	}
+	var messages []redis.XMessage
 	var rs []redis.XStream
 	var t = timeout * 1000
 	if !(len(group) == 0) {
@@ -653,10 +654,14 @@ func (r *RedisStream) TakeMessageAsync(count int64, timeout int64) []redis.XMess
 				return nil
 			}
 			if len(rs[0].Messages) > 0 {
-				if r.logger != nil {
-					r.logger.Debug(fmt.Sprintf("%s 处理历史：%s", r.Group, rs[0].Messages[0].ID))
+
+				for _, val := range rs {
+					messages = append(messages, val.Messages...)
+					if r.logger != nil {
+						r.logger.Debug(fmt.Sprintf("%s 处理历史：%s", r.Group, val.Messages[0].ID))
+					}
 				}
-				return rs[0].Messages
+				return messages
 			}
 		}
 	}
@@ -668,7 +673,10 @@ func (r *RedisStream) TakeMessageAsync(count int64, timeout int64) []redis.XMess
 		}
 	}
 
-	return nil
+	for _, val := range rs {
+		messages = append(messages, val.Messages...)
+	}
+	return messages
 }
 
 // ConsumeAsync 队列消费大循环，处理消息后自动确认
