@@ -17,7 +17,7 @@ package main
 import (
 	"context"
 	"github.com/donetkit/contrib/tracer"
-	otel_http "github.com/donetkit/contrib/utils/http"
+	"github.com/donetkit/contrib/utils/otel_http"
 	"go.opentelemetry.io/otel/propagation"
 	"io"
 	"net/http"

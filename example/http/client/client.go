@@ -19,7 +19,8 @@ import (
 	"flag"
 	"fmt"
 	"github.com/donetkit/contrib/tracer"
-	otel_http "github.com/donetkit/contrib/utils/http"
+	"github.com/donetkit/contrib/utils/otel_http"
+
 	"go.opentelemetry.io/otel/baggage"
 	"go.opentelemetry.io/otel/propagation"
 	semconv "go.opentelemetry.io/otel/semconv/v1.10.0"

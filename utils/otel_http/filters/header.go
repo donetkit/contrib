@@ -15,7 +15,7 @@
 package filters // import "go.opentelemetry.io/contrib/instrumentation/net/http/otel_http/filters"
 
 import (
-	otel_http "github.com/donetkit/contrib/utils/http"
+	"github.com/donetkit/contrib/utils/otel_http"
 	"net/http"
 	"net/textproto"
 	"strings"

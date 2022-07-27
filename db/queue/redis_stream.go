@@ -32,13 +32,10 @@ type RedisStream struct {
 
 	key string
 
-	_count int64
+	count int64
 
 	// 重新处理确认队列中死信的间隔。默认60s
 	RetryInterval int64
-
-	// 基元类型数据添加该key构成集合。默认__data
-	PrimitiveKey string
 
 	// 最大队列长度。要保留的消息个数，超过则移除较老消息，非精确，实际上略大于该值，默认100万
 	MaxLength int64
@@ -73,22 +70,18 @@ type RedisStream struct {
 func NewRedisStream(client *redis.Client, key string, logger glog.ILogger) *RedisStream {
 	host, _ := host.Info()
 	return &RedisStream{
-		consumer:      fmt.Sprintf("%s@%d", host.Hostname, os.Getpid()),
-		key:           key,
-		RetryInterval: 60,
-		PrimitiveKey:  "__data",
-		MaxLength:     1_000_000,
-		MaxRetry:      10,
-		BlockTime:     15,
-		StartId:       "0-0",
-		client:        client,
-		ctx:           context.Background(),
-
-		RetryTimesWhenSendFailed: 3,
-
+		RetryTimesWhenSendFailed:    3,
 		RetryIntervalWhenSendFailed: 1000,
-
-		logger: logger.WithField("MQ-Redis-Stream", "MQ-Redis-Stream"),
+		logger:                      logger.WithField("MQ-Redis-Stream", "MQ-Redis-Stream"),
+		consumer:                    fmt.Sprintf("%s@%d", host.Hostname, os.Getpid()),
+		key:                         key,
+		RetryInterval:               60,
+		MaxLength:                   1_000_000,
+		MaxRetry:                    10,
+		BlockTime:                   15,
+		StartId:                     "0-0",
+		client:                      client,
+		ctx:                         context.Background(),
 	}
 }
 
@@ -354,17 +347,17 @@ func (r *RedisStream) Add(value interface{}, msgId ...string) string {
 	}
 
 	// 自动修剪超长部分，每1000次生产，修剪一次
-	if r._count <= 0 {
-		r._count = r.Count()
+	if r.count <= 0 {
+		r.count = r.Count()
 	}
-	atomic.AddInt64(&r._count, 1)
+	atomic.AddInt64(&r.count, 1)
 
 	var trim = false
-	if r.MaxLength > 0 && r._count%1000 == 0 {
-		r._count = r.Count() + 1
-
+	if r.MaxLength > 0 && r.count%1000 == 0 {
+		r.count = r.Count() + 1
 		trim = true
 	}
+
 	var id = ""
 	if len(msgId) > 0 {
 		id = msgId[0]
@@ -412,24 +405,20 @@ func (r *RedisStream) Adds(values []interface{}) int {
 	}
 
 	// 自动修剪超长部分，每1000次生产，修剪一次
-	if r._count <= 0 {
-		r._count = r.Count()
-	}
-
-	// 自动修剪超长部分，每1000次生产，修剪一次
-	if r._count <= 0 {
-		r._count = r.Count()
+	if r.count <= 0 {
+		r.count = r.Count()
 	}
 
 	var trim = false
-	if r.MaxLength > 0 && r._count > 0 && r._count%1000 == 0 {
-		r._count = r.Count() + 1
+	if r.MaxLength > 0 && r.count > 0 && r.count%1000 == 0 {
+		r.count = r.Count() + 1
 		trim = true
 	}
+
 	// 开启管道
 	pipe := r.client.Pipeline()
 	for _, item := range values {
-		atomic.AddInt64(&r._count, 1)
+		atomic.AddInt64(&r.count, 1)
 		r.AddInternal(item, "", trim, false)
 		trim = false
 	}
@@ -685,7 +674,9 @@ func (r *RedisStream) TakeMessageBlock(count int64, timeout int64) []redis.XMess
 }
 
 // ConsumeBlock 队列消费大循环，处理消息后自动确认
-func (r *RedisStream) ConsumeBlock(ctx context.Context, OnMessage func(msg []redis.XMessage)) {
+// ctx context.Context
+// OnMessage msg 消费消息信息 returns 返回True确认消费Acknowledge 返回False不确认消费Acknowledge 等待二次消费
+func (r *RedisStream) ConsumeBlock(ctx context.Context, OnMessage func(msg []redis.XMessage) bool) {
 	go func() {
 		// 自动创建消费组
 		r.SetGroup(r.Group)
@@ -707,11 +698,12 @@ func (r *RedisStream) ConsumeBlock(ctx context.Context, OnMessage func(msg []red
 				}
 
 				// 处理消息
-				OnMessage(mqMsg)
-
-				// 确认消息
-				for _, msg := range mqMsg {
-					r.Acknowledge(msg.ID)
+				result := OnMessage(mqMsg)
+				if result {
+					// 确认消息
+					for _, msg := range mqMsg {
+						r.Acknowledge(msg.ID)
+					}
 				}
 			}
 
