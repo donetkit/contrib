@@ -6,6 +6,7 @@ import (
 	"github.com/donetkit/contrib-log/glog"
 	"github.com/go-redis/redis/v8"
 	"github.com/shirou/gopsutil/v3/host"
+	"os"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -70,7 +71,7 @@ type RedisStream struct {
 func NewRedisStream(client *redis.Client, key string, logger glog.ILogger) *RedisStream {
 	host, _ := host.Info()
 	return &RedisStream{
-		consumer:      fmt.Sprintf("%s", host.Hostname), // fmt.Sprintf("%s@%d", host.Hostname, os.Getpid()),
+		consumer:      fmt.Sprintf("%s@%d", host.Hostname, os.Getpid()),
 		key:           key,
 		RetryInterval: 60,
 		PrimitiveKey:  "__data",
@@ -635,13 +636,12 @@ func (r *RedisStream) TakeMessageAsync(count int64, timeout int64) []redis.XMess
 		r.RetryAck()
 	}
 
-	var messages []redis.XMessage
 	var rs []redis.XStream
-	var t = timeout * 1000
+	var block = timeout * 1000
 	if !(len(group) == 0) {
-		rs = r.ReadGroupBlock(group, r.consumer, count, t, ">")
+		rs = r.ReadGroupBlock(group, r.consumer, count, block, ">")
 	} else {
-		rs = r.ReadAsync(r.StartId, count, t)
+		rs = r.ReadAsync(r.StartId, count, block)
 	}
 
 	if len(rs) == 0 {
@@ -654,8 +654,8 @@ func (r *RedisStream) TakeMessageAsync(count int64, timeout int64) []redis.XMess
 			if len(rs) == 0 {
 				return nil
 			}
+			var messages []redis.XMessage
 			if len(rs[0].Messages) > 0 {
-
 				for _, val := range rs {
 					messages = append(messages, val.Messages...)
 					if r.logger != nil {
@@ -664,6 +664,7 @@ func (r *RedisStream) TakeMessageAsync(count int64, timeout int64) []redis.XMess
 				}
 				return messages
 			}
+
 		}
 	}
 	// 全局消费（非消费组）时，更新编号
@@ -673,7 +674,7 @@ func (r *RedisStream) TakeMessageAsync(count int64, timeout int64) []redis.XMess
 			r.SetNextId(msg[len(msg)-1].ID)
 		}
 	}
-
+	var messages []redis.XMessage
 	for _, val := range rs {
 		messages = append(messages, val.Messages...)
 	}
@@ -697,13 +698,14 @@ func (r *RedisStream) ConsumeAsync(ctx context.Context, OnMessage func(msg []red
 			default:
 				// 异步阻塞消费
 				mqMsg := r.TakeMessageAsync(1, timeout)
-				if len(mqMsg) == 0 {
-					// 没有消息，歇一会
+				if len(mqMsg) == 0 { // 没有消息，歇一会
 					time.Sleep(time.Millisecond * 1000)
 					continue
 				}
+
 				// 处理消息
 				OnMessage(mqMsg)
+
 				// 确认消息
 				for _, msg := range mqMsg {
 					r.Acknowledge(msg.ID)
@@ -751,14 +753,13 @@ func (r *RedisStream) Range(startId string, endId string, count ...int64) []redi
 		}
 		return result
 
-	} else {
-		result, err := r.client.XRange(r.ctx, r.key, startId, endId).Result()
-		if err != nil {
-			return nil
-		}
-		return result
 	}
-	return nil
+
+	result, err := r.client.XRange(r.ctx, r.key, startId, endId).Result()
+	if err != nil {
+		return nil
+	}
+	return result
 }
 
 // RangeTimeSpan 获取区间消息
