@@ -2,11 +2,13 @@ package queue
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/donetkit/contrib-log/glog"
 	"github.com/go-redis/redis/v8"
 	"github.com/shirou/gopsutil/v3/host"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -371,9 +373,10 @@ func (r *RedisStream) Add(value interface{}, msgId ...string) string {
 }
 
 func (r *RedisStream) AddInternal(value interface{}, msgId string, trim bool, retryOnFailed bool) string {
+	val := interfaceToStr(value)
 	args := &redis.XAddArgs{
 		Stream: r.key,
-		Values: map[string]interface{}{r.key: value},
+		Values: map[string]interface{}{r.key: val},
 	}
 
 	if trim {
@@ -472,9 +475,9 @@ func (r *RedisStream) TakeOne() []redis.XMessage {
 	return r.Take(1)
 }
 
-// TakeOneAsync 异步消费获取一个
-func (r *RedisStream) TakeOneAsync(ctx context.Context, timeout int64) []redis.XMessage {
-	return r.TakeMessageAsync(1, timeout)
+// TakeOneBlock 异步消费获取一个
+func (r *RedisStream) TakeOneBlock(ctx context.Context, timeout int64) []redis.XMessage {
+	return r.TakeMessageBlock(1, timeout)
 }
 
 func (r *RedisStream) SetNextId(id string) {
@@ -561,11 +564,11 @@ func (r *RedisStream) Read(startId string, count int64) []redis.XStream {
 	return result
 }
 
-// ReadAsync 原始独立消费
+// ReadBlock 原始独立消费
 // startId 开始编号 特殊的$，表示接收从阻塞那一刻开始添加到流的消息
 // count 消息个数
 // block 阻塞毫秒数，0表示永远
-func (r *RedisStream) ReadAsync(startId string, count int64, block int64) []redis.XStream {
+func (r *RedisStream) ReadBlock(startId string, count int64, block int64) []redis.XStream {
 	if len(startId) == 0 {
 		startId = "$"
 	}
@@ -624,8 +627,8 @@ func (r *RedisStream) Ack(group string, id string) int64 {
 	return result
 }
 
-// TakeMessageAsync 异步消费获取一个 timeout 超时时间，默认0秒永远阻塞
-func (r *RedisStream) TakeMessageAsync(count int64, timeout int64) []redis.XMessage {
+// TakeMessageBlock 异步消费获取一个 timeout 超时时间，默认0秒永远阻塞
+func (r *RedisStream) TakeMessageBlock(count int64, timeout int64) []redis.XMessage {
 	var group = r.Group
 	if r.FromLastOffset && r.setGroupId == 0 {
 		r.GroupSetId(r.Group, "$")
@@ -641,7 +644,7 @@ func (r *RedisStream) TakeMessageAsync(count int64, timeout int64) []redis.XMess
 	if !(len(group) == 0) {
 		rs = r.ReadGroupBlock(group, r.consumer, count, block, ">")
 	} else {
-		rs = r.ReadAsync(r.StartId, count, block)
+		rs = r.ReadBlock(r.StartId, count, block)
 	}
 
 	if len(rs) == 0 {
@@ -681,8 +684,8 @@ func (r *RedisStream) TakeMessageAsync(count int64, timeout int64) []redis.XMess
 	return messages
 }
 
-// ConsumeAsync 队列消费大循环，处理消息后自动确认
-func (r *RedisStream) ConsumeAsync(ctx context.Context, OnMessage func(msg []redis.XMessage)) {
+// ConsumeBlock 队列消费大循环，处理消息后自动确认
+func (r *RedisStream) ConsumeBlock(ctx context.Context, OnMessage func(msg []redis.XMessage)) {
 	go func() {
 		// 自动创建消费组
 		r.SetGroup(r.Group)
@@ -697,7 +700,7 @@ func (r *RedisStream) ConsumeAsync(ctx context.Context, OnMessage func(msg []red
 				return // 退出了...
 			default:
 				// 异步阻塞消费
-				mqMsg := r.TakeMessageAsync(1, timeout)
+				mqMsg := r.TakeMessageBlock(1, timeout)
 				if len(mqMsg) == 0 { // 没有消息，歇一会
 					time.Sleep(time.Millisecond * 1000)
 					continue
@@ -765,4 +768,20 @@ func (r *RedisStream) Range(startId string, endId string, count ...int64) []redi
 // RangeTimeSpan 获取区间消息
 func (r *RedisStream) RangeTimeSpan(start int64, end int64, count ...int64) []redis.XMessage {
 	return r.Range(fmt.Sprintf("%d-0", start), fmt.Sprintf("%d-0", end), count...)
+}
+
+// interfaceToStr
+func interfaceToStr(obj interface{}) string {
+	if str, ok := obj.(string); ok {
+		return str
+	}
+	v := reflect.ValueOf(obj)
+	switch v.Kind() {
+	case reflect.String:
+		return obj.(string)
+	default:
+
+	}
+	str, _ := json.Marshal(obj)
+	return string(str)
 }

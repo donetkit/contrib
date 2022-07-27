@@ -5,18 +5,18 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-type FullRedis struct {
+type MQRedisStream struct {
 	client *redis.Client
 	logger glog.ILogger
 }
 
-func NewFullRedis(client *redis.Client, logger glog.ILogger) *FullRedis {
-	return &FullRedis{
+func NewMQRedisStream(client *redis.Client, logger glog.ILogger) *MQRedisStream {
+	return &MQRedisStream{
 		client: client,
 		logger: logger,
 	}
 }
 
-func (r *FullRedis) GetStream(topic string) *RedisStream {
+func (r *MQRedisStream) GetStream(topic string) *RedisStream {
 	return NewRedisStream(r.client, topic, r.logger)
 }
