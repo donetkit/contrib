@@ -13,16 +13,20 @@ type IProducerConsumer interface {
 	IsEmpty() bool
 
 	// Add 生产添加
-	Add(params interface{}, msgId ...string) string
+	Add(value interface{}, msgId ...string) string
 
 	// Take 消费获取一批
 	Take(count int64) []redis.XMessage
 
+	// TakeOne 消费获取一个
 	TakeOne() []redis.XMessage
 
-	// TakeOneAsync 异步消费获取一个
-	TakeOneAsync(ctx context.Context, timeout int64) []redis.XMessage
+	// TakeOneBlock 异步消费获取一个
+	TakeOneBlock(ctx context.Context, timeout int64) []redis.XMessage
 
 	// Acknowledge 确认消费
 	Acknowledge(keys ...string) int64
+
+	// Delete 删除消费消息
+	Delete(id ...string) int64
 }

@@ -723,6 +723,9 @@ func (r *RedisStream) ConsumeBlock(ctx context.Context, OnMessage func(msg []red
 // Delete 删除指定消息
 // id 消息Id
 func (r *RedisStream) Delete(id ...string) int64 {
+	if len(id) == 0 {
+		return 0
+	}
 	result, err := r.client.XDel(r.ctx, r.key, id...).Result()
 	if err != nil {
 		return 0
