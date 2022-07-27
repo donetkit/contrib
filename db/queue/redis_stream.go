@@ -255,7 +255,7 @@ func (r *RedisStream) ReadGroup(group string, consumer string, count ...int64) [
 	if len(group) == 0 {
 		return nil
 	}
-	if r.FromLastOffset && r.setGroupId == 0 {
+	if r.FromLastOffset && r.setGroupId == 0 && atomic.CompareAndSwapInt64(&r.setGroupId, 0, 1) {
 		r.GroupSetId(r.Group, "$")
 		atomic.AddInt64(&r.setGroupId, 1)
 	}
@@ -285,7 +285,7 @@ func (r *RedisStream) ReadGroupBlock(group string, consumer string, count int64,
 		return nil
 	}
 
-	if r.FromLastOffset && r.setGroupId == 0 {
+	if r.FromLastOffset && r.setGroupId == 0 && atomic.CompareAndSwapInt64(&r.setGroupId, 0, 1) {
 		r.GroupSetId(r.Group, "$")
 		atomic.AddInt64(&r.setGroupId, 1)
 	}
@@ -619,7 +619,7 @@ func (r *RedisStream) Ack(group string, id string) int64 {
 // TakeMessageBlock 异步消费获取一个 timeout 超时时间，默认0秒永远阻塞
 func (r *RedisStream) TakeMessageBlock(count int64, timeout int64) []redis.XMessage {
 	var group = r.Group
-	if r.FromLastOffset && r.setGroupId == 0 {
+	if r.FromLastOffset && r.setGroupId == 0 && atomic.CompareAndSwapInt64(&r.setGroupId, 0, 1) {
 		r.GroupSetId(r.Group, "$")
 		atomic.AddInt64(&r.setGroupId, 1)
 	}
