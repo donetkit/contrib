@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/donetkit/contrib-log/glog"
 	"github.com/donetkit/contrib/db/queue"
-	redisRedis "github.com/donetkit/contrib/db/redis"
+	redisClient "github.com/donetkit/contrib/db/redis"
 	"github.com/donetkit/contrib/tracer"
 	"github.com/go-redis/redis/v8"
 	"time"
@@ -30,7 +30,7 @@ func main() {
 		traceServer = tracer.New(tracer.WithName(service), tracer.WithProvider(tp), tracer.WithPropagators(jaeger))
 	}
 
-	rdb := redisRedis.NewRedisClient(redisRedis.WithLogger(logs), redisRedis.WithTracer(traceServer), redisRedis.WithAddr("127.0.0.1"), redisRedis.WithPassword(""), redisRedis.WithDB(13))
+	rdb := redisClient.NewRedisClient(redisClient.WithLogger(logs), redisClient.WithTracer(traceServer), redisClient.WithAddr("127.0.0.1"), redisClient.WithPassword(""), redisClient.WithDB(13))
 
 	fullRedis := queue.NewMQRedisStream(rdb, logs)
 
