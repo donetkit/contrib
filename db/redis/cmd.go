@@ -7,6 +7,7 @@ import (
 	"github.com/donetkit/contrib/utils/cache"
 	"github.com/donetkit/contrib/utils/uuid"
 	"github.com/go-redis/redis/v8"
+	"reflect"
 	"time"
 )
 
@@ -113,43 +114,60 @@ func (c *Cache) RPop(key string) interface{} {
 }
 
 // XRead default type []redis.XStream
-func (c *Cache) XRead(key string, count int64) (interface{}, error) {
-	if count <= 0 {
-		count = 10
+func (c *Cache) XRead(key string, startId string, count int64, block int64) []redis.XMessage {
+	// startId 开始编号 特殊的$，表示接收从阻塞那一刻开始添加到流的消息
+	if len(startId) == 0 {
+		startId = "$"
 	}
 	instance := c.getInstance()
-	msg, err := instance.client.XRead(instance.ctx, &redis.XReadArgs{
-		Streams: []string{key, "0"},
+	arg := &redis.XReadArgs{
+		Streams: []string{key, startId},
 		Count:   count,
-		Block:   10 * time.Millisecond,
-	}).Result()
-	//msg, err := instance.client.XReadStreams(instance.ctx, key, fmt.Sprintf("%d", count)).Result()
-	if err != nil {
-		return nil, err
+		//Block:   1 * time.Millisecond,
 	}
-	return msg, nil
+	if block > 0 {
+		arg.Block = time.Millisecond * time.Duration(block)
+	}
+	val := instance.client.XRead(instance.ctx, arg)
+	if val.Err() != nil {
+		return nil
+	}
+	var message []redis.XMessage
+	for _, stream := range val.Val() {
+		message = append(message, stream.Messages...)
+	}
+	return message
+
 }
 
-func (c *Cache) XAdd(key, id string, values []string) (string, error) {
+func (c *Cache) XAdd(key, msgId string, trim bool, maxLength int64, value interface{}) string {
 	instance := c.getInstance()
-	id, err := instance.client.XAdd(instance.ctx, &redis.XAddArgs{
+	val := interfaceToStr(value)
+	arg := &redis.XAddArgs{
 		Stream: key,
-		ID:     id,
-		Values: values,
-	}).Result()
-	if err != nil {
-		return "", err
+		Values: map[string]interface{}{key: val},
 	}
-	return id, nil
+	if trim {
+		arg.MaxLenApprox = maxLength
+	}
+	if msgId != "" {
+		arg.ID = msgId
+	}
+
+	id, err := instance.client.XAdd(instance.ctx, arg).Result()
+	if err != nil {
+		return ""
+	}
+	return id
 }
 
-func (c *Cache) XDel(key string, id string) (int64, error) {
+func (c *Cache) XDel(key string, id ...string) int64 {
 	instance := c.getInstance()
-	n, err := instance.client.XDel(instance.ctx, key, id).Result()
+	n, err := instance.client.XDel(instance.ctx, key, id...).Result()
 	if err != nil {
-		return 0, err
+		return 0
 	}
-	return n, nil
+	return n
 }
 
 func (c *Cache) GetLock(lockName string, acquireTimeout, lockTimeOut time.Duration) (string, error) {
@@ -262,4 +280,215 @@ func (c *Cache) ZRem(key string, members ...interface{}) error {
 		return cmd.Err()
 	}
 	return nil
+}
+
+func (c *Cache) XLen(key string) int64 {
+	instance := c.getInstance()
+	cmd := instance.client.XLen(instance.ctx, key)
+	if cmd.Err() != nil {
+		return 0
+	}
+	return cmd.Val()
+}
+
+func (c *Cache) Exists(keys ...string) int64 {
+	instance := c.getInstance()
+	cmd := instance.client.Exists(instance.ctx, keys...)
+	if cmd.Err() != nil {
+		return 0
+	}
+	return cmd.Val()
+}
+
+func (c *Cache) XInfoGroups(key string) []redis.XInfoGroup {
+	instance := c.getInstance()
+	cmd := instance.client.XInfoGroups(instance.ctx, key)
+	if cmd.Err() != nil {
+		return nil
+	}
+	return cmd.Val()
+}
+
+func (c *Cache) XGroupCreateMkStream(key string, group string, start string) string {
+	instance := c.getInstance()
+	cmd := instance.client.XGroupCreateMkStream(instance.ctx, key, group, start)
+	if cmd.Err() != nil {
+		return ""
+	}
+	return cmd.Val()
+}
+
+func (c *Cache) XGroupDestroy(key string, group string) int64 {
+	instance := c.getInstance()
+	cmd := instance.client.XGroupDestroy(instance.ctx, key, group)
+	if cmd.Err() != nil {
+		return 0
+	}
+	return cmd.Val()
+}
+
+func (c *Cache) XPendingExt(key string, group string, startId string, endId string, count int64, consumer ...string) []redis.XPendingExt {
+	instance := c.getInstance()
+	arg := &redis.XPendingExtArgs{
+		Stream: key,
+		Group:  group,
+		Start:  startId,
+		End:    endId,
+		Count:  count,
+		//consumer: "consumer",
+	}
+	if len(consumer) > 0 {
+		arg.Consumer = consumer[0]
+	}
+	cmd := instance.client.XPendingExt(instance.ctx, arg)
+	if cmd.Err() != nil {
+		return nil
+	}
+	return cmd.Val()
+}
+
+func (c *Cache) XPending(key string, group string) *redis.XPending {
+	instance := c.getInstance()
+	cmd := instance.client.XPending(instance.ctx, key, group)
+	if cmd.Err() != nil {
+		return nil
+	}
+	return cmd.Val()
+}
+
+func (c *Cache) XGroupDelConsumer(key string, group string, consumer string) int64 {
+	instance := c.getInstance()
+	cmd := instance.client.XGroupDelConsumer(instance.ctx, key, group, consumer)
+	if cmd.Err() != nil {
+		return 0
+	}
+	return cmd.Val()
+}
+
+func (c *Cache) XGroupSetID(key string, group string, start string) string {
+	instance := c.getInstance()
+	cmd := instance.client.XGroupSetID(instance.ctx, key, group, start)
+	if cmd.Err() != nil {
+		return ""
+	}
+	return cmd.Val()
+}
+
+func (c *Cache) XReadGroup(key string, group string, consumer string, count int64, block int64, id ...string) []redis.XMessage {
+	instance := c.getInstance()
+	arg := &redis.XReadGroupArgs{
+		Group:    group,
+		Consumer: consumer,
+		Count:    count,
+		Streams:  []string{key, ">"},
+	}
+
+	if block > 0 {
+		arg.Block = time.Millisecond * time.Duration(block)
+	}
+
+	if len(id) > 0 {
+		arg.Streams = []string{key, id[0]}
+	}
+	cmd := instance.client.XReadGroup(instance.ctx, arg)
+	if cmd.Err() != nil {
+		return nil
+	}
+	var message []redis.XMessage
+	for _, stream := range cmd.Val() {
+		message = append(message, stream.Messages...)
+	}
+	return message
+}
+
+func (c *Cache) XInfoStream(key string) *redis.XInfoStream {
+	instance := c.getInstance()
+
+	cmd := instance.client.XInfoStream(instance.ctx, key)
+	if cmd.Err() != nil {
+		return nil
+	}
+	return cmd.Val()
+}
+
+func (c *Cache) XInfoConsumers(key string, group string) []redis.XInfoConsumer {
+	instance := c.getInstance()
+
+	cmd := instance.client.XInfoConsumers(instance.ctx, key, group)
+	if cmd.Err() != nil {
+		return nil
+	}
+	return cmd.Val()
+}
+
+func (c *Cache) Pipeline() redis.Pipeliner {
+	return c.getInstance().client.Pipeline()
+}
+
+func (c *Cache) XClaim(key string, group string, consumer string, id string, msIdle int64) []redis.XMessage {
+	instance := c.getInstance()
+	arg := &redis.XClaimArgs{
+		Stream:   key,
+		Group:    group,
+		Consumer: consumer,
+		MinIdle:  time.Millisecond * time.Duration(msIdle),
+		Messages: []string{id},
+	}
+	cmd := instance.client.XClaim(instance.ctx, arg)
+	if cmd.Err() != nil {
+		return nil
+	}
+	return cmd.Val()
+}
+
+func (c *Cache) XAck(key string, group string, ids ...string) int64 {
+	instance := c.getInstance()
+	cmd := instance.client.XAck(instance.ctx, key, group, ids...)
+	if cmd.Err() != nil {
+		return 0
+	}
+	return cmd.Val()
+}
+
+func (c *Cache) XTrimMaxLen(key string, maxLen int64) int64 {
+	instance := c.getInstance()
+	cmd := instance.client.XTrimMaxLen(instance.ctx, key, maxLen)
+	if cmd.Err() != nil {
+		return 0
+	}
+	return cmd.Val()
+}
+
+func (c *Cache) XRangeN(key string, start string, stop string, count int64) []redis.XMessage {
+	instance := c.getInstance()
+	cmd := instance.client.XRangeN(instance.ctx, key, start, stop, count)
+	if cmd.Err() != nil {
+		return nil
+	}
+	return cmd.Val()
+}
+
+func (c *Cache) XRange(key string, start string, stop string) []redis.XMessage {
+	instance := c.getInstance()
+	cmd := instance.client.XRange(instance.ctx, key, start, stop)
+	if cmd.Err() != nil {
+		return nil
+	}
+	return cmd.Val()
+}
+
+// interfaceToStr
+func interfaceToStr(obj interface{}) string {
+	if str, ok := obj.(string); ok {
+		return str
+	}
+	v := reflect.ValueOf(obj)
+	switch v.Kind() {
+	case reflect.String:
+		return obj.(string)
+	default:
+
+	}
+	str, _ := json.Marshal(obj)
+	return string(str)
 }

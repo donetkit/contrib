@@ -2,13 +2,12 @@ package queue
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/donetkit/contrib-log/glog"
+	"github.com/donetkit/contrib/utils/cache"
 	"github.com/go-redis/redis/v8"
 	"github.com/shirou/gopsutil/v3/host"
 	"os"
-	"reflect"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -16,6 +15,8 @@ import (
 )
 
 type RedisStream struct {
+	DB int
+
 	// 失败时抛出异常。默认false
 	ThrowOnFailure bool
 
@@ -55,7 +56,7 @@ type RedisStream struct {
 	// 消费者
 	consumer string
 
-	client *redis.Client
+	client cache.ICache
 
 	// 首次消费时的消费策略
 	// 默认值false，表示从头部开始消费，等同于RocketMQ/Java版的CONSUME_FROM_FIRST_OFFSET
@@ -67,13 +68,13 @@ type RedisStream struct {
 	logger glog.ILoggerEntry
 }
 
-func NewRedisStream(client *redis.Client, key string, logger glog.ILogger) *RedisStream {
-	host, _ := host.Info()
+func NewRedisStream(client cache.ICache, key string, logger glog.ILogger) *RedisStream {
+	info, _ := host.Info()
 	return &RedisStream{
 		RetryTimesWhenSendFailed:    3,
 		RetryIntervalWhenSendFailed: 1000,
 		logger:                      logger.WithField("MQ-Redis-Stream", "MQ-Redis-Stream"),
-		consumer:                    fmt.Sprintf("%s@%d", host.Hostname, os.Getpid()),
+		consumer:                    fmt.Sprintf("%s@%d", info.Hostname, os.Getpid()),
 		key:                         key,
 		RetryInterval:               60,
 		MaxLength:                   1_000_000,
@@ -87,12 +88,7 @@ func NewRedisStream(client *redis.Client, key string, logger glog.ILogger) *Redi
 
 // Count 个数
 func (r *RedisStream) Count() int64 {
-	result, err := r.client.XLen(r.ctx, r.key).Result()
-	if err != nil {
-		return 0
-	}
-	return result
-
+	return r.client.WithDB(r.DB).WithContext(r.ctx).XLen(r.key)
 }
 
 // IsEmpty 集合是否为空
@@ -108,7 +104,7 @@ func (r *RedisStream) SetGroup(group string) bool {
 	}
 	r.Group = group
 
-	keyCount, _ := r.client.Exists(r.ctx, r.key).Result()
+	keyCount := r.client.WithDB(r.DB).WithContext(r.ctx).Exists(r.key)
 	// 如果Stream不存在，则直接创建消费组，此时会创建Stream
 	if keyCount == 0 {
 		return r.GroupCreate(group)
@@ -133,11 +129,7 @@ func (r *RedisStream) SetGroup(group string) bool {
 }
 
 func (r *RedisStream) GetGroups() []redis.XInfoGroup {
-	xInfoGroup, err := r.client.XInfoGroups(r.ctx, r.key).Result()
-	if err != nil {
-		return nil
-	}
-	return xInfoGroup
+	return r.client.WithDB(r.DB).WithContext(r.ctx).XInfoGroups(r.key)
 }
 
 // GroupCreate 创建消费组
@@ -152,22 +144,13 @@ func (r *RedisStream) GroupCreate(group string, startIds ...string) bool {
 		startId = startIds[0]
 	}
 
-	result, err := r.client.XGroupCreateMkStream(r.ctx, r.key, group, startId).Result()
-	if err != nil {
-		return false
-	}
-	return result == "OK"
+	return r.client.WithDB(r.DB).WithContext(r.ctx).XGroupCreateMkStream(r.key, group, startId) == "OK"
 }
 
 // GroupDestroy 销毁消费组
 // group 消费组名称
 func (r *RedisStream) GroupDestroy(group string) int64 {
-	result, err := r.client.XGroupDestroy(r.ctx, r.key, group).Result()
-	if err != nil {
-		return 0
-	}
-	return result
-
+	return r.client.WithDB(r.DB).WithContext(r.ctx).XGroupDestroy(r.key, group)
 }
 
 // Pending 获取等待列表消息
@@ -186,20 +169,7 @@ func (r *RedisStream) Pending(group string, startId string, endId string, count 
 	if len(count) > 0 {
 		pendingCount = count[0]
 	}
-
-	args := &redis.XPendingExtArgs{
-		Stream: r.key,
-		Group:  group,
-		Start:  startId,
-		End:    endId,
-		Count:  pendingCount,
-		//consumer: "consumer",
-	}
-	infoExt, err := r.client.XPendingExt(r.ctx, args).Result()
-	if err != nil {
-		return nil
-	}
-	return infoExt
+	return r.client.WithDB(r.DB).WithContext(r.ctx).XPendingExt(r.key, group, startId, endId, pendingCount)
 }
 
 // GetPending 获取等待列表
@@ -208,11 +178,7 @@ func (r *RedisStream) GetPending(group string) *redis.XPending {
 	if len(group) == 0 {
 		return nil
 	}
-	result, err := r.client.XPending(r.ctx, r.key, group).Result()
-	if err != nil {
-		return nil
-	}
-	return result
+	return r.client.WithDB(r.DB).WithContext(r.ctx).XPending(r.key, group)
 }
 
 // GroupDeleteConsumer 销毁消费者
@@ -226,11 +192,7 @@ func (r *RedisStream) GroupDeleteConsumer(group string, consumer string) int64 {
 	if len(consumer) == 0 {
 		return 0
 	}
-	result, err := r.client.XGroupDelConsumer(r.ctx, r.key, group, consumer).Result()
-	if err != nil {
-		return 0
-	}
-	return result
+	return r.client.WithDB(r.DB).WithContext(r.ctx).XGroupDelConsumer(r.key, group, consumer)
 }
 
 // GroupSetId 设置消费组Id
@@ -243,15 +205,11 @@ func (r *RedisStream) GroupSetId(group string, startId string) bool {
 	if len(startId) == 0 {
 		startId = "$"
 	}
-	result, err := r.client.XGroupSetID(r.ctx, r.key, group, startId).Result()
-	if err != nil {
-		return false
-	}
-	return result == "OK"
+	return r.client.WithDB(r.DB).WithContext(r.ctx).XGroupSetID(r.key, group, startId) == "OK"
 }
 
 // ReadGroup 消费组消费  group 消费组名称  consumer 消费组  count 消息个数
-func (r *RedisStream) ReadGroup(group string, consumer string, count ...int64) []redis.XStream {
+func (r *RedisStream) ReadGroup(group string, consumer string, count int64) []redis.XMessage {
 	if len(group) == 0 {
 		return nil
 	}
@@ -259,19 +217,7 @@ func (r *RedisStream) ReadGroup(group string, consumer string, count ...int64) [
 		r.GroupSetId(r.Group, "$")
 		atomic.AddInt64(&r.setGroupId, 1)
 	}
-	arg := &redis.XReadGroupArgs{
-		Group:    group,
-		Consumer: consumer,
-		Streams:  []string{r.key, ">"},
-	}
-	if len(count) > 0 {
-		arg.Count = count[0]
-	}
-	result, err := r.client.XReadGroup(r.ctx, arg).Result()
-	if err != nil {
-		return nil
-	}
-	return result
+	return r.client.WithDB(r.DB).WithContext(r.ctx).XReadGroup(r.key, group, consumer, count, 0)
 }
 
 // ReadGroupBlock 消费组消费
@@ -280,7 +226,7 @@ func (r *RedisStream) ReadGroup(group string, consumer string, count ...int64) [
 // count 消息个数
 // block 阻塞毫秒数，0表示永远
 // id 消息id
-func (r *RedisStream) ReadGroupBlock(group string, consumer string, count int64, block int64, id ...string) []redis.XStream {
+func (r *RedisStream) ReadGroupBlock(group string, consumer string, count int64, block int64, id ...string) []redis.XMessage {
 	if len(group) == 0 {
 		return nil
 	}
@@ -302,20 +248,12 @@ func (r *RedisStream) ReadGroupBlock(group string, consumer string, count int64,
 		arg.Streams = []string{r.key, id[0]}
 	}
 
-	result, err := r.client.XReadGroup(r.ctx, arg).Result()
-	if err != nil {
-		return nil
-	}
-	return result
+	return r.client.WithDB(r.DB).WithContext(r.ctx).XReadGroup(r.key, group, consumer, count, block, id...)
 }
 
 // GetInfo 队列信息
 func (r *RedisStream) GetInfo() *redis.XInfoStream {
-	result, err := r.client.XInfoStream(r.ctx, r.key).Result()
-	if err != nil {
-		return nil
-	}
-	return result
+	return r.client.WithDB(r.DB).WithContext(r.ctx).XInfoStream(r.key)
 }
 
 // GetConsumers 获取消费者
@@ -324,11 +262,7 @@ func (r *RedisStream) GetConsumers(group string) []redis.XInfoConsumer {
 	if len(group) == 0 {
 		return nil
 	}
-	result, err := r.client.XInfoConsumers(r.ctx, r.key, group).Result()
-	if err != nil {
-		return nil
-	}
-	return result
+	return r.client.WithDB(r.DB).WithContext(r.ctx).XInfoConsumers(r.key, group)
 }
 
 // Acknowledge 消费确认
@@ -366,21 +300,9 @@ func (r *RedisStream) Add(value interface{}, msgId ...string) string {
 }
 
 func (r *RedisStream) AddInternal(value interface{}, msgId string, trim bool, retryOnFailed bool) string {
-	val := interfaceToStr(value)
-	args := &redis.XAddArgs{
-		Stream: r.key,
-		Values: map[string]interface{}{r.key: val},
-	}
-
-	if trim {
-		args.MaxLenApprox = r.MaxLength
-	}
-	if msgId != "" {
-		args.ID = msgId
-	}
 	for i := 0; i < r.RetryTimesWhenSendFailed; i++ {
-		var id, err = r.client.XAdd(r.ctx, args).Result()
-		if !retryOnFailed || err != redis.Nil {
+		var id = r.client.WithDB(r.DB).WithContext(r.ctx).XAdd(r.key, msgId, trim, r.MaxLength, value)
+		if id != "" || !retryOnFailed {
 			return id
 		}
 		if i < r.RetryTimesWhenSendFailed {
@@ -416,7 +338,7 @@ func (r *RedisStream) Adds(values []interface{}) int {
 	}
 
 	// 开启管道
-	pipe := r.client.Pipeline()
+	pipe := r.client.WithDB(r.DB).WithContext(r.ctx).Pipeline()
 	for _, item := range values {
 		atomic.AddInt64(&r.count, 1)
 		r.AddInternal(item, "", trim, false)
@@ -438,9 +360,8 @@ func (r *RedisStream) Adds(values []interface{}) int {
 
 // Take 批量消费获取，前移指针StartId
 func (r *RedisStream) Take(count int64) []redis.XMessage {
-	var message []redis.XMessage
 	var group = r.Group
-	var rs []redis.XStream
+	var rs []redis.XMessage
 	if !(len(group) == 0) {
 		r.RetryAck()
 		rs = r.ReadGroup(group, r.consumer, count)
@@ -448,15 +369,10 @@ func (r *RedisStream) Take(count int64) []redis.XMessage {
 		rs = r.Read(r.StartId, count)
 	}
 
-	for _, item := range rs {
-		if len(group) == 0 {
-			for _, message := range item.Messages {
-				r.SetNextId(message.ID)
-			}
-		}
-		message = append(message, item.Messages...)
+	if len(group) == 0 && len(rs) > 0 {
+		r.SetNextId(rs[len(rs)-1].ID)
 	}
-	return message
+	return rs
 }
 
 // TakeOne 消费获取一个
@@ -537,42 +453,16 @@ func (r *RedisStream) RetryAck() {
 // Read 原始独立消费
 // startId 开始编号 特殊的$，表示接收从阻塞那一刻开始添加到流的消息
 // count 消息个数
-func (r *RedisStream) Read(startId string, count int64) []redis.XStream {
-	if len(startId) == 0 {
-		startId = "$"
-	}
-	arg := &redis.XReadArgs{
-		Streams: []string{r.key, startId},
-		Count:   count,
-		//Block:   1 * time.Millisecond,
-	}
-	result, err := r.client.XRead(r.ctx, arg).Result()
-	if err != nil {
-		return nil
-	}
-	return result
+func (r *RedisStream) Read(startId string, count int64) []redis.XMessage {
+	return r.client.WithDB(r.DB).WithContext(r.ctx).XRead(r.key, startId, count, 0)
 }
 
 // ReadBlock 原始独立消费
 // startId 开始编号 特殊的$，表示接收从阻塞那一刻开始添加到流的消息
 // count 消息个数
 // block 阻塞毫秒数，0表示永远
-func (r *RedisStream) ReadBlock(startId string, count int64, block int64) []redis.XStream {
-	if len(startId) == 0 {
-		startId = "$"
-	}
-	arg := &redis.XReadArgs{
-		Streams: []string{r.key, startId},
-		Count:   count,
-	}
-	if block > 0 {
-		arg.Block = time.Duration(block) * time.Millisecond
-	}
-	result, err := r.client.XRead(r.ctx, arg).Result()
-	if err != nil {
-		return nil
-	}
-	return result
+func (r *RedisStream) ReadBlock(startId string, count int64, block int64) []redis.XMessage {
+	return r.client.WithDB(r.DB).WithContext(r.ctx).XRead(r.key, startId, count, block)
 }
 
 // Claim 改变待处理消息的所有权，抢夺他人未确认消息
@@ -584,18 +474,7 @@ func (r *RedisStream) Claim(group string, consumer string, id string, msIdle int
 	if len(group) == 0 || len(consumer) == 0 {
 		return nil
 	}
-	arg := &redis.XClaimArgs{
-		Stream:   r.key,
-		Group:    group,
-		Consumer: consumer,
-		MinIdle:  time.Millisecond * time.Duration(msIdle),
-		Messages: []string{id},
-	}
-	result, err := r.client.XClaim(r.ctx, arg).Result()
-	if err != nil {
-		return nil
-	}
-	return result
+	return r.client.WithDB(r.DB).WithContext(r.ctx).XClaim(r.key, group, consumer, id, msIdle)
 
 }
 
@@ -609,11 +488,7 @@ func (r *RedisStream) Ack(group string, id string) int64 {
 	if len(id) == 0 {
 		return 0
 	}
-	result, err := r.client.XAck(r.ctx, r.key, group, id).Result()
-	if err != nil {
-		return 0
-	}
-	return result
+	return r.client.WithDB(r.DB).WithContext(r.ctx).XAck(r.key, group, id)
 }
 
 // TakeMessageBlock 异步消费获取一个 timeout 超时时间，默认0秒永远阻塞
@@ -628,7 +503,7 @@ func (r *RedisStream) TakeMessageBlock(count int64, timeout int64) []redis.XMess
 		r.RetryAck()
 	}
 
-	var rs []redis.XStream
+	var rs []redis.XMessage
 	var block = timeout * 1000
 	if !(len(group) == 0) {
 		rs = r.ReadGroupBlock(group, r.consumer, count, block, ">")
@@ -646,31 +521,19 @@ func (r *RedisStream) TakeMessageBlock(count int64, timeout int64) []redis.XMess
 			if len(rs) == 0 {
 				return nil
 			}
-			var messages []redis.XMessage
-			if len(rs[0].Messages) > 0 {
-				for _, val := range rs {
-					messages = append(messages, val.Messages...)
-					if r.logger != nil {
-						r.logger.Debug(fmt.Sprintf("%s 处理历史：%s", r.Group, val.Messages[0].ID))
-					}
+			for _, val := range rs {
+				if r.logger != nil {
+					r.logger.Debug(fmt.Sprintf("%s 处理历史：%s", r.Group, val.ID))
 				}
-				return messages
 			}
-
+			return rs
 		}
 	}
 	// 全局消费（非消费组）时，更新编号
-	if len(group) == 0 {
-		msg := rs[len(rs)-1].Messages
-		if len(msg) > 0 {
-			r.SetNextId(msg[len(msg)-1].ID)
-		}
+	if len(group) == 0 && len(rs) > 0 {
+		r.SetNextId(rs[len(rs)-1].ID)
 	}
-	var messages []redis.XMessage
-	for _, val := range rs {
-		messages = append(messages, val.Messages...)
-	}
-	return messages
+	return rs
 }
 
 // ConsumeBlock 队列消费大循环，处理消息后自动确认
@@ -718,21 +581,13 @@ func (r *RedisStream) Delete(id ...string) int64 {
 	if len(id) == 0 {
 		return 0
 	}
-	result, err := r.client.XDel(r.ctx, r.key, id...).Result()
-	if err != nil {
-		return 0
-	}
-	return result
+	return r.client.WithDB(r.DB).WithContext(r.ctx).XDel(r.key, id...)
 }
 
 // Trim 裁剪队列到指定大小
 // maxLen 最大长度。为了提高效率，最大长度并没有那么精准
 func (r *RedisStream) Trim(maxLen int64) int64 {
-	result, err := r.client.XTrimMaxLen(r.ctx, r.key, maxLen).Result()
-	if err != nil {
-		return 0
-	}
-	return result
+	return r.client.WithDB(r.DB).WithContext(r.ctx).XTrimMaxLen(r.key, maxLen)
 }
 
 // Range  获取区间消息
@@ -745,38 +600,13 @@ func (r *RedisStream) Range(startId string, endId string, count ...int64) []redi
 	}
 
 	if len(count) > 0 {
-		result, err := r.client.XRangeN(r.ctx, r.key, startId, endId, count[0]).Result()
-		if err != nil {
-			return nil
-		}
-		return result
-
+		return r.client.WithDB(r.DB).WithContext(r.ctx).XRangeN(r.key, startId, endId, count[0])
 	}
 
-	result, err := r.client.XRange(r.ctx, r.key, startId, endId).Result()
-	if err != nil {
-		return nil
-	}
-	return result
+	return r.client.WithDB(r.DB).WithContext(r.ctx).XRange(r.key, startId, endId)
 }
 
 // RangeTimeSpan 获取区间消息
 func (r *RedisStream) RangeTimeSpan(start int64, end int64, count ...int64) []redis.XMessage {
 	return r.Range(fmt.Sprintf("%d-0", start), fmt.Sprintf("%d-0", end), count...)
-}
-
-// interfaceToStr
-func interfaceToStr(obj interface{}) string {
-	if str, ok := obj.(string); ok {
-		return str
-	}
-	v := reflect.ValueOf(obj)
-	switch v.Kind() {
-	case reflect.String:
-		return obj.(string)
-	default:
-
-	}
-	str, _ := json.Marshal(obj)
-	return string(str)
 }

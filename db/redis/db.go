@@ -67,17 +67,3 @@ func (c *config) newClient(db int) *redis.Client {
 	}
 	return client
 }
-
-func NewRedisClient(opts ...Option) *redis.Client {
-	c := &config{
-		ctx:      context.TODO(),
-		addr:     "127.0.0.1",
-		port:     6379,
-		password: "",
-		db:       0,
-	}
-	for _, opt := range opts {
-		opt(c)
-	}
-	return c.newClient(c.db)
-}

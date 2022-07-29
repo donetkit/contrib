@@ -2,15 +2,15 @@ package queue
 
 import (
 	"github.com/donetkit/contrib-log/glog"
-	"github.com/go-redis/redis/v8"
+	"github.com/donetkit/contrib/utils/cache"
 )
 
 type MQRedisStream struct {
-	client *redis.Client
+	client cache.ICache
 	logger glog.ILogger
 }
 
-func NewMQRedisStream(client *redis.Client, logger glog.ILogger) *MQRedisStream {
+func NewMQRedisStream(client cache.ICache, logger glog.ILogger) *MQRedisStream {
 	return &MQRedisStream{
 		client: client,
 		logger: logger,

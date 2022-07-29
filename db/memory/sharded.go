@@ -104,27 +104,6 @@ func (sc *ShardedCache) IsExist(key string) bool {
 func (sc *ShardedCache) Delete(key string) (int64, error) {
 	return sc.bucket(key).Delete(key)
 }
-func (sc *ShardedCache) LPush(key string, val interface{}) (int64, error) {
-	return sc.bucket(key).LPush(key, val)
-}
-func (sc *ShardedCache) RPop(key string) interface{} {
-	return sc.bucket(key).RPop(key)
-}
-func (sc *ShardedCache) XRead(key string, val int64) (interface{}, error) {
-	return sc.bucket(key).XRead(key, val)
-}
-func (sc *ShardedCache) XAdd(key, id string, values []string) (string, error) {
-	return sc.bucket(key).XAdd(key, id, values)
-}
-func (sc *ShardedCache) XDel(key string, val string) (int64, error) {
-	return sc.bucket(key).LPush(key, val)
-}
-func (sc *ShardedCache) GetLock(lockName string, acquireTimeout, lockTimeOut time.Duration) (string, error) {
-	return sc.bucket(lockName).GetLock(lockName, acquireTimeout, lockTimeOut)
-}
-func (sc *ShardedCache) ReleaseLock(key string, val string) bool {
-	return sc.bucket(key).ReleaseLock(key, val)
-}
 
 func (sc *ShardedCache) Increment(key string, val int64) (int64, error) {
 	return sc.bucket(key).Increment(key, val)

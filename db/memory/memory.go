@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	icache "github.com/donetkit/contrib/utils/cache"
+	"github.com/go-redis/redis/v8"
 	"io"
 	"os"
 	"sync"
@@ -20,6 +21,146 @@ type Cache struct {
 	defaultExpiration time.Duration
 	items             map[string]*item
 	janitor           *janitor
+}
+
+func (c *Cache) LPush(s string, i interface{}) (int64, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) RPop(s string) interface{} {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) XRead(key string, startId string, count int64, block int64) []redis.XMessage {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) XAdd(key, msgId string, trim bool, maxLength int64, value interface{}) string {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) XDel(key string, id ...string) int64 {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) GetLock(s string, duration time.Duration, duration2 time.Duration) (string, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) ReleaseLock(s string, s2 string) bool {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) ZAdd(s string, f float64, i interface{}) interface{} {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) ZRangeByScore(s string, i int64, i2 int64) ([]string, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) ZRem(s string, i ...interface{}) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) XLen(s string) int64 {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) Exists(s ...string) int64 {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) XInfoGroups(s string) []redis.XInfoGroup {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) XGroupCreateMkStream(key string, group string, start string) string {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) XGroupDestroy(key string, group string) int64 {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) XPendingExt(key string, group string, startId string, endId string, count int64, consumer ...string) []redis.XPendingExt {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) XPending(key string, group string) *redis.XPending {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) XGroupDelConsumer(key string, group string, consumer string) int64 {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) XGroupSetID(key string, group string, start string) string {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) XReadGroup(key string, group string, consumer string, count int64, block int64, id ...string) []redis.XMessage {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) XInfoStream(key string) *redis.XInfoStream {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) XInfoConsumers(key string, group string) []redis.XInfoConsumer {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) Pipeline() redis.Pipeliner {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) XClaim(key string, group string, consumer string, id string, msIdle int64) []redis.XMessage {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) XAck(key string, group string, ids ...string) int64 {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) XTrimMaxLen(key string, maxLen int64) int64 {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) XRangeN(key string, start string, stop string, count int64) []redis.XMessage {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) XRange(key string, start string, stop string) []redis.XMessage {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (c *Cache) WithDB(db int) icache.ICache {
@@ -376,48 +517,4 @@ func (c *Cache) Flush() {
 	c.Lock()
 	c.items = map[string]*item{}
 	c.Unlock()
-}
-
-func (c *Cache) LPush(key string, value interface{}) (int64, error) {
-	//TODO implement me
-	panic("implement me")
-}
-func (c *Cache) RPop(key string) interface{} {
-	//TODO implement me
-	panic("implement me")
-}
-func (c *Cache) XRead(key string, value int64) (interface{}, error) {
-	//TODO implement me
-	panic("implement me")
-}
-func (c *Cache) XAdd(key, id string, values []string) (string, error) {
-	//TODO implement me
-	panic("implement me")
-}
-func (c *Cache) XDel(key string, value string) (int64, error) {
-	//TODO implement me
-	panic("implement me")
-}
-func (c *Cache) GetLock(key string, acquireTimeout, lockTimeOut time.Duration) (string, error) {
-	//TODO implement me
-	panic("implement me")
-}
-func (c *Cache) ReleaseLock(key string, value string) bool {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *Cache) ZAdd(s string, f float64, i interface{}) interface{} {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *Cache) ZRangeByScore(s string, i int64, i2 int64) ([]string, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *Cache) ZRem(s string, i ...interface{}) error {
-	//TODO implement me
-	panic("implement me")
 }
