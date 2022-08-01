@@ -248,40 +248,6 @@ func (c *Cache) Flush() {
 	instance.client.FlushAll(c.ctx)
 }
 
-func (c *Cache) ZAdd(key string, score float64, member interface{}) interface{} {
-	//NX: 添加元素时，如果该元素已经存在，则添加失败。
-	//XX: 添加元素时，如果元素存在，执行修改，如果不存在，则失败。
-	//CH：修改元素分数，后面可以接多个score member
-	//INCR: 和 ZINCRBY 一样的效果，可以指定某一个元素，给它的分数进行加减操作
-	instance := c.getInstance()
-	cmd := instance.client.ZAdd(instance.ctx, key, &redis.Z{Score: score, Member: member})
-	if cmd.Err() != nil {
-		return cmd.Err()
-	}
-	return nil
-}
-
-func (c *Cache) ZRangeByScore(key string, min, max int64) ([]string, error) {
-	instance := c.getInstance()
-	cmd := instance.client.ZRangeByScore(instance.ctx, key, &redis.ZRangeBy{
-		Min: fmt.Sprintf("%d", min),
-		Max: fmt.Sprintf("%d", max),
-	})
-	if cmd.Err() != nil {
-		return nil, cmd.Err()
-	}
-	return cmd.Val(), nil
-}
-
-func (c *Cache) ZRem(key string, members ...interface{}) error {
-	instance := c.getInstance()
-	cmd := instance.client.ZRem(instance.ctx, key, members)
-	if cmd.Err() != nil {
-		return cmd.Err()
-	}
-	return nil
-}
-
 func (c *Cache) XLen(key string) int64 {
 	instance := c.getInstance()
 	cmd := instance.client.XLen(instance.ctx, key)
@@ -471,6 +437,47 @@ func (c *Cache) XRangeN(key string, start string, stop string, count int64) []re
 func (c *Cache) XRange(key string, start string, stop string) []redis.XMessage {
 	instance := c.getInstance()
 	cmd := instance.client.XRange(instance.ctx, key, start, stop)
+	if cmd.Err() != nil {
+		return nil
+	}
+	return cmd.Val()
+}
+
+func (c *Cache) ZAdd(key string, score float64, value ...interface{}) int64 {
+	if len(value) <= 0 {
+		return 0
+	}
+	instance := c.getInstance()
+
+	var member []*redis.Z
+	for _, val := range value {
+		member = append(member, &redis.Z{Score: score, Member: val})
+	}
+
+	cmd := instance.client.ZAdd(instance.ctx, key, member...)
+	if cmd.Err() != nil {
+		return 0
+	}
+	return cmd.Val()
+}
+
+func (c *Cache) ZRem(key string, value ...interface{}) int64 {
+	instance := c.getInstance()
+	cmd := instance.client.ZRem(instance.ctx, key, value...)
+	if cmd.Err() != nil {
+		return 0
+	}
+	return cmd.Val()
+}
+
+func (c *Cache) ZRangeByScore(key string, min int64, max int64, offset int64, count int64) []string {
+	instance := c.getInstance()
+	cmd := instance.client.ZRangeByScore(instance.ctx, key, &redis.ZRangeBy{
+		Min:    fmt.Sprintf("%d", min),
+		Max:    fmt.Sprintf("%d", max),
+		Offset: offset,
+		Count:  count,
+	})
 	if cmd.Err() != nil {
 		return nil
 	}

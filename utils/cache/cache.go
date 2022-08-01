@@ -56,13 +56,13 @@ type ICache interface {
 
 	Flush()
 
-	ZAdd(string, float64, interface{}) interface{}
-	ZRangeByScore(string, int64, int64) ([]string, error)
-	ZRem(string, ...interface{}) error
+	ZAdd(key string, score float64, value ...interface{}) int64
+	ZRangeByScore(key string, min int64, max int64, offset int64, count int64) []string
+	ZRem(key string, value ...interface{}) int64
 
-	XLen(string) int64
-	Exists(...string) int64
-	XInfoGroups(string) []redis.XInfoGroup
+	XLen(key string) int64
+	Exists(keys ...string) int64
+	XInfoGroups(key string) []redis.XInfoGroup
 	XGroupCreateMkStream(key string, group string, start string) string
 	XGroupDestroy(key string, group string) int64
 	XPendingExt(key string, group string, startId string, endId string, count int64, consumer ...string) []redis.XPendingExt

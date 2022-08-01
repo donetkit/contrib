@@ -58,17 +58,17 @@ func (c *Cache) ReleaseLock(s string, s2 string) bool {
 	panic("implement me")
 }
 
-func (c *Cache) ZAdd(s string, f float64, i interface{}) interface{} {
+func (c *Cache) ZAdd(s string, f float64, i ...interface{}) int64 {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (c *Cache) ZRangeByScore(s string, i int64, i2 int64) ([]string, error) {
+func (c *Cache) ZRangeByScore(s string, i int64, i2 int64, i3 int64, i4 int64) []string {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (c *Cache) ZRem(s string, i ...interface{}) error {
+func (c *Cache) ZRem(s string, i ...interface{}) int64 {
 	//TODO implement me
 	panic("implement me")
 }
