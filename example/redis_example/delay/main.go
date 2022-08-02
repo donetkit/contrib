@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/donetkit/contrib-log/glog"
-	"github.com/donetkit/contrib/db/queue"
+	"github.com/donetkit/contrib/db/queue/queue_delay"
 	rredis "github.com/donetkit/contrib/db/redis"
 	"github.com/donetkit/contrib/tracer"
 	"github.com/go-redis/redis/v8"
@@ -32,7 +32,7 @@ func main() {
 
 	//var RedisClient = rredis.NewRedisClient(rredis.WithLogger(logs), rredis.WithAddr("127.0.0.1"), rredis.WithDB(14), rredis.WithPassword(""), rredis.WithTracer(traceServer))
 
-	fullRedis := queue.NewMQRedisDelay(RedisClient, logs)
+	fullRedis := queue_delay.NewMQRedisDelay(RedisClient, logs)
 	go func() {
 		queue1 := fullRedis.GetRedisDelay(topic)
 		for {
@@ -58,7 +58,7 @@ type MyModel struct {
 	Name string `json:"name"`
 }
 
-func Public(fullRedis *queue.MQRedisDelay, topic string) {
+func Public(fullRedis *queue_delay.MQRedisDelay, topic string) {
 	var index = 0
 	queue1 := fullRedis.GetRedisDelay(topic)
 	for {

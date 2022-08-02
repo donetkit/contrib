@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/donetkit/contrib-log/glog"
-	"github.com/donetkit/contrib/db/queue"
+	"github.com/donetkit/contrib/db/queue/queue_stream"
 	rredis "github.com/donetkit/contrib/db/redis"
 	"github.com/donetkit/contrib/tracer"
 	"github.com/go-redis/redis/v8"
@@ -32,7 +32,7 @@ func main() {
 
 	var RedisClient = rredis.New(rredis.WithLogger(logs), rredis.WithAddr("127.0.0.1"), rredis.WithDB(13), rredis.WithPassword(""), rredis.WithTracer(traceServer))
 
-	fullRedis := queue.NewMQRedisStream(RedisClient, logs)
+	fullRedis := queue_stream.NewMQRedisStream(RedisClient, logs)
 
 	queue1 := fullRedis.GetStream(topic)
 	queue1.BlockTime = 5
@@ -58,7 +58,7 @@ type MyModel struct {
 	Name string `json:"name"`
 }
 
-func Public(fullRedis *queue.MQRedisStream, topic string) {
+func Public(fullRedis *queue_stream.MQRedisStream, topic string) {
 	var index = 0
 	queue1 := fullRedis.GetStream(topic)
 	queue1.MaxLength = 1000
