@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"github.com/donetkit/contrib-log/glog"
 	"github.com/donetkit/contrib/db/queue"
@@ -20,7 +19,7 @@ const (
 var logs = glog.New()
 
 func main() {
-	ctx, _ := context.WithCancel(context.Background())
+	//ctx, _ := context.WithCancel(context.Background())
 	var traceServer *tracer.Server
 
 	fs := tracer.NewFallbackSampler(1)
@@ -29,19 +28,20 @@ func main() {
 		jaeger := tracer.Jaeger{}
 		traceServer = tracer.New(tracer.WithName(service), tracer.WithProvider(tp), tracer.WithPropagators(jaeger))
 	}
-
 	var RedisClient = rredis.New(rredis.WithLogger(logs), rredis.WithAddr("127.0.0.1"), rredis.WithDB(13), rredis.WithPassword(""), rredis.WithTracer(traceServer))
 
-	fullRedis := queue.NewMQRedisStream(RedisClient, logs)
+	//var RedisClient = rredis.NewRedisClient(rredis.WithLogger(logs), rredis.WithAddr("127.0.0.1"), rredis.WithDB(14), rredis.WithPassword(""), rredis.WithTracer(traceServer))
 
-	queue1 := fullRedis.GetStream(topic)
-	queue1.BlockTime = 5
-	queue1.SetGroup("Group1")
-	queue1.ConsumeBlock(ctx, Consumer1)
-
-	queue2 := fullRedis.GetStream(topic)
-	queue2.SetGroup("Group2")
-	queue2.ConsumeBlock(ctx, Consumer2)
+	fullRedis := queue.NewMQRedisDelay(RedisClient, logs)
+	go func() {
+		queue1 := fullRedis.GetRedisDelay(topic)
+		for {
+			var msgs = queue1.TakeOne(10)
+			if len(msgs) > 0 {
+				fmt.Println(msgs)
+			}
+		}
+	}()
 
 	go func() {
 		Public(fullRedis, topic)
@@ -58,13 +58,12 @@ type MyModel struct {
 	Name string `json:"name"`
 }
 
-func Public(fullRedis *queue.MQRedisStream, topic string) {
+func Public(fullRedis *queue.MQRedisDelay, topic string) {
 	var index = 0
-	queue1 := fullRedis.GetStream(topic)
-	queue1.MaxLength = 1000
+	queue1 := fullRedis.GetRedisDelay(topic)
 	for {
-		queue1.Add(MyModel{Id: fmt.Sprintf("%d", index), Name: fmt.Sprintf("掌聲%d", index)})
-		time.Sleep(time.Millisecond * 10)
+		queue1.Add(fmt.Sprintf("%d", index), 60)
+		time.Sleep(time.Millisecond * 1000)
 		index++
 		if index > 20 {
 			break
