@@ -6,7 +6,7 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-const redisClientDBKey = "redisClientDBKey"
+const redisClientDBKey = "RedisClientDBKey"
 
 var allClient []*redis.Client
 
