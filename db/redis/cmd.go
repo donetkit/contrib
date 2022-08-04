@@ -18,10 +18,10 @@ func (c *Cache) WithDB(db int) cache.ICache {
 	cache := &Cache{
 		db:     db,
 		ctx:    c.ctx,
-		client: allClient[c.db],
+		client: allClient[db],
 		config: c.config,
 	}
-	cache.ctx = context.WithValue(cache.ctx, redisClientDBKey, c.db)
+	cache.ctx = context.WithValue(cache.ctx, redisClientDBKey, db)
 	return cache
 }
 
@@ -31,6 +31,7 @@ func (c *Cache) WithContext(ctx context.Context) cache.ICache {
 	} else {
 		c.ctx = c.config.ctx
 	}
+	c.ctx = context.WithValue(c.ctx, redisClientDBKey, c.db)
 	return c
 }
 
