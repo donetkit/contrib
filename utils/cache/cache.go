@@ -46,6 +46,7 @@ type ICache interface {
 	RPop(string) interface{}
 	XRead(key string, startId string, count int64, block int64) []redis.XMessage
 	XAdd(key, msgId string, trim bool, maxLength int64, value interface{}) string
+	XAddKey(key, msgId string, trim bool, maxLength int64, vKey string, value interface{}) string
 	XDel(key string, id ...string) int64
 	GetLock(string, time.Duration, time.Duration) (string, error)
 	ReleaseLock(string, string) bool

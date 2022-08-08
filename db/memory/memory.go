@@ -43,6 +43,11 @@ func (c *Cache) XAdd(key, msgId string, trim bool, maxLength int64, value interf
 	panic("implement me")
 }
 
+func (c *Cache) XAddKey(key, msgId string, trim bool, maxLength int64, vKey string, value interface{}) string {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (c *Cache) XDel(key string, id ...string) int64 {
 	//TODO implement me
 	panic("implement me")

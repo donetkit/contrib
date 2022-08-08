@@ -155,6 +155,26 @@ func (c *Cache) XAdd(key, msgId string, trim bool, maxLength int64, value interf
 	return id
 }
 
+func (c *Cache) XAddKey(key, msgId string, trim bool, maxLength int64, vKey string, value interface{}) string {
+	val := interfaceToStr(value)
+	arg := &redis.XAddArgs{
+		Stream: key,
+		Values: map[string]interface{}{vKey: val},
+	}
+	if trim {
+		arg.MaxLenApprox = maxLength
+	}
+	if msgId != "" {
+		arg.ID = msgId
+	}
+
+	id, err := c.client.XAdd(c.ctx, arg).Result()
+	if err != nil {
+		return ""
+	}
+	return id
+}
+
 func (c *Cache) XDel(key string, id ...string) int64 {
 
 	n, err := c.client.XDel(c.ctx, key, id...).Result()
