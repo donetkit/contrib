@@ -495,6 +495,70 @@ func (c *Cache) ZRangeByScore(key string, min int64, max int64, offset int64, co
 	return cmd.Val()
 }
 
+func (c *Cache) HashGet(key, value string) string {
+	cmd := c.client.HGet(c.ctx, key, value)
+	if cmd.Err() != nil {
+		return ""
+	}
+	return cmd.Val()
+}
+
+func (c *Cache) HashGets(key string, value ...string) []interface{} {
+	cmd := c.client.HMGet(c.ctx, key, value...)
+	if cmd.Err() != nil {
+		return nil
+	}
+	return cmd.Val()
+}
+
+func (c *Cache) HashAll(key string) map[string]string {
+	cmd := c.client.HGetAll(c.ctx, key)
+	if cmd.Err() != nil {
+		return nil
+	}
+	return cmd.Val()
+}
+
+func (c *Cache) HashSet(key string, values ...interface{}) int64 {
+	cmd := c.client.HSet(c.ctx, key, values...)
+	if cmd.Err() != nil {
+		return 0
+	}
+	return cmd.Val()
+}
+
+func (c *Cache) HashExist(key, values string) bool {
+	cmd := c.client.HExists(c.ctx, key, values)
+	if cmd.Err() != nil {
+		return false
+	}
+	return cmd.Val()
+}
+
+func (c *Cache) HashDel(key string, values ...string) int64 {
+	cmd := c.client.HDel(c.ctx, key, values...)
+	if cmd.Err() != nil {
+		return 0
+	}
+	return cmd.Val()
+}
+
+func (c *Cache) HashKeys(key string) []string {
+	cmd := c.client.HKeys(c.ctx, key)
+	if cmd.Err() != nil {
+		return nil
+	}
+	return cmd.Val()
+}
+
+func (c *Cache) HashLen(key string) int64 {
+	cmd := c.client.HLen(c.ctx, key)
+	if cmd.Err() != nil {
+		return 0
+	}
+	return cmd.Val()
+}
+
 // interfaceToStr
 func interfaceToStr(obj interface{}) string {
 	if str, ok := obj.(string); ok {

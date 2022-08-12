@@ -23,6 +23,46 @@ type Cache struct {
 	janitor           *janitor
 }
 
+func (c *Cache) HashGet(key, value string) string {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) HashGets(key string, value ...string) []interface{} {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) HashAll(key string) map[string]string {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) HashSet(key string, values ...interface{}) int64 {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) HashExist(key, values string) bool {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) HashDel(key string, values ...string) int64 {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) HashKeys(key string) []string {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) HashLen(key string) int64 {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (c *Cache) LPush(s string, i interface{}) (int64, error) {
 	//TODO implement me
 	panic("implement me")

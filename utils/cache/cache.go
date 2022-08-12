@@ -80,4 +80,13 @@ type ICache interface {
 	XTrimMaxLen(key string, maxLen int64) int64
 	XRangeN(key string, start string, stop string, count int64) []redis.XMessage
 	XRange(key string, start string, stop string) []redis.XMessage
+
+	HashGet(key, value string) string
+	HashGets(key string, value ...string) []interface{}
+	HashAll(key string) map[string]string
+	HashSet(key string, values ...interface{}) int64
+	HashExist(key, values string) bool
+	HashDel(key string, values ...string) int64
+	HashKeys(key string) []string
+	HashLen(key string) int64
 }
