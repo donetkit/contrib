@@ -28,11 +28,6 @@ type RedisDelayQueue struct {
 	// 转移延迟消息到主队列的间隔。默认10s
 	TransferInterval int64
 
-	// 个数
-	Count int64
-
-	IsEmpty bool
-
 	// 默认延迟时间。默认60秒
 	Delay int64
 
@@ -57,6 +52,17 @@ func NewRedisDelay(client cache.ICache, key string, logger glog.ILogger) *RedisD
 		client: client,
 		ctx:    context.Background(),
 	}
+}
+
+// Count 个数
+func (r *RedisDelayQueue) Count() int64 {
+	return 0
+}
+
+// IsEmpty 集合是否为空
+func (r *RedisDelayQueue) IsEmpty() bool {
+	return r.Count() == 0
+
 }
 
 // Add 添加延迟消息
