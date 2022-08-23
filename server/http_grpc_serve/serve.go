@@ -83,7 +83,7 @@ func New(opts ...Option) *Server {
 		Host:        chost.GetOutBoundIp(),
 		Port:        80,
 		Version:     "V0.1",
-		protocol:    "GRPC",
+		protocol:    "HTTP-GRPC",
 		pId:         os.Getpid(),
 		environment: server2.EnvName,
 
@@ -124,6 +124,9 @@ func New(opts ...Option) *Server {
 
 	//cfg.GServer = grpc.NewServer(gOpts...)
 
+	server.router = http.NewServeMux()
+	server.ServerMux = runtime.NewServeMux()
+
 	return server
 }
 
@@ -131,13 +134,7 @@ func (s *Server) Stop() {
 	s.tcpMux.Close()
 }
 
-func (s *Server) initGateway(ctx context.Context) error {
-	s.router = http.NewServeMux()
-	s.ServerMux = runtime.NewServeMux()
-	return nil
-}
-
-func (s *Server) startGateway() {
+func (s *Server) start() {
 	s.router.Handle("/", s.ServerMux)
 
 	s.httpServer = &http.Server{
@@ -222,11 +219,8 @@ func (s *Server) Run() {
 	}()
 
 	go func() {
-		if err := s.initGateway(s.Ctx); err != nil {
-			panic(err)
-		}
 		s.registerHTTP(s.Ctx, s)
-		s.startGateway()
+		s.start()
 	}()
 
 	go func() {
@@ -320,5 +314,11 @@ func (s *Server) AddGrpcServerOptions(grpcOpts ...grpc.ServerOption) *Server {
 // AddGrpcServerOption set grpc.ServerOption function
 func (s *Server) AddGrpcServerOption(grpcOpt grpc.ServerOption) *Server {
 	s.grpcOpts = append(s.grpcOpts, grpcOpt)
+	return s
+}
+
+// AddHandler set handler function
+func (s *Server) AddHandler(pattern string, handler http.Handler) *Server {
+	s.router.Handle(pattern, handler)
 	return s
 }
