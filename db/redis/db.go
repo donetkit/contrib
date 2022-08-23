@@ -33,30 +33,32 @@ func New(opts ...Option) *Cache {
 }
 
 func (c *config) newRedisClient() []*redis.Client {
+	ctx := context.Background()
 	redisClients := make([]*redis.Client, 0)
-	redisClients = append(redisClients, c.newClient(0))
-	redisClients = append(redisClients, c.newClient(1))
-	redisClients = append(redisClients, c.newClient(2))
-	redisClients = append(redisClients, c.newClient(3))
-	redisClients = append(redisClients, c.newClient(4))
-	redisClients = append(redisClients, c.newClient(5))
-	redisClients = append(redisClients, c.newClient(6))
-	redisClients = append(redisClients, c.newClient(7))
-	redisClients = append(redisClients, c.newClient(8))
-	redisClients = append(redisClients, c.newClient(9))
-	redisClients = append(redisClients, c.newClient(10))
-	redisClients = append(redisClients, c.newClient(11))
-	redisClients = append(redisClients, c.newClient(12))
-	redisClients = append(redisClients, c.newClient(13))
-	redisClients = append(redisClients, c.newClient(14))
-	redisClients = append(redisClients, c.newClient(15))
+	redisClients = append(redisClients, c.newClient(ctx, 0))
+	redisClients = append(redisClients, c.newClient(ctx, 1))
+	redisClients = append(redisClients, c.newClient(ctx, 2))
+	redisClients = append(redisClients, c.newClient(ctx, 3))
+	redisClients = append(redisClients, c.newClient(ctx, 4))
+	redisClients = append(redisClients, c.newClient(ctx, 5))
+	redisClients = append(redisClients, c.newClient(ctx, 6))
+	redisClients = append(redisClients, c.newClient(ctx, 7))
+	redisClients = append(redisClients, c.newClient(ctx, 8))
+	redisClients = append(redisClients, c.newClient(ctx, 9))
+	redisClients = append(redisClients, c.newClient(ctx, 10))
+	redisClients = append(redisClients, c.newClient(ctx, 11))
+	redisClients = append(redisClients, c.newClient(ctx, 12))
+	redisClients = append(redisClients, c.newClient(ctx, 13))
+	redisClients = append(redisClients, c.newClient(ctx, 14))
+	redisClients = append(redisClients, c.newClient(ctx, 15))
 	return redisClients
 }
 
-func (c *config) newClient(db int) *redis.Client {
+func (c *config) newClient(ctx context.Context, db int) *redis.Client {
 	addr := fmt.Sprintf("%s:%d", c.addr, c.port)
 	client := redis.NewClient(&redis.Options{Addr: addr, Password: c.password, DB: db})
-	_, err := client.Ping(context.Background()).Result() // 检测心跳
+
+	_, err := client.Ping(ctx).Result() // 检测心跳
 	if err != nil {
 		if c.logger != nil {
 			c.logger.Error("connect redis failed" + err.Error())
@@ -70,7 +72,7 @@ func (c *config) newClient(db int) *redis.Client {
 
 func NewRedisClient(opts ...Option) *redis.Client {
 	c := &config{
-		ctx:      context.TODO(),
+		ctx:      context.Background(),
 		addr:     "127.0.0.1",
 		port:     6379,
 		password: "",
@@ -79,5 +81,5 @@ func NewRedisClient(opts ...Option) *redis.Client {
 	for _, opt := range opts {
 		opt(c)
 	}
-	return c.newClient(c.db)
+	return c.newClient(c.ctx, c.db)
 }
