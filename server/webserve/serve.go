@@ -19,7 +19,7 @@ import (
 	"time"
 )
 
-type config struct {
+type Server struct {
 	exit            chan struct{}
 	Ctx             context.Context
 	Tracer          *tracer.Server
@@ -40,12 +40,8 @@ type config struct {
 	runMode         string
 }
 
-type Server struct {
-	Options *config
-}
-
 func New(opts ...Option) *Server {
-	var cfg = &config{
+	var server = &Server{
 		exit:           make(chan struct{}),
 		Ctx:            context.Background(),
 		ServiceName:    "demo",
@@ -60,45 +56,42 @@ func New(opts ...Option) *Server {
 		maxHeaderBytes: 1 << 20,
 	}
 	for _, opt := range opts {
-		opt(cfg)
+		opt(server)
 	}
-	server := &Server{
-		Options: cfg,
-	}
-	if cfg.Logger == nil {
-		cfg.Logger = glog.New().WithField("WebServe", "WebServe")
+	if server.Logger == nil {
+		server.Logger = glog.New().WithField("WebServe", "WebServe")
 	}
 	return server
 }
 
 func (s *Server) IsDevelopment() bool {
-	return s.Options.environment == server2.Dev
+	return s.environment == server2.Dev
 }
 
 func (s *Server) IsTest() bool {
-	return s.Options.environment == server2.Test
+	return s.environment == server2.Test
 }
 
 func (s *Server) IsProduction() bool {
-	return s.Options.environment == server2.Prod
+	return s.environment == server2.Prod
 }
 
 func (s *Server) registerDiscovery() *Server {
-	if s.Options.clientDiscovery == nil {
+	if s.clientDiscovery == nil {
 		return nil
 	}
-	err := s.Options.clientDiscovery.Register()
+	err := s.clientDiscovery.Register()
 	if err != nil {
-		s.Options.Logger.Error(err.Error())
+		s.Logger.Error(err.Error())
 	}
 	return s
 }
 
 func (s *Server) deregister() error {
-	if s.Options.clientDiscovery == nil {
+	if s.clientDiscovery == nil {
 		return nil
 	}
-	err := s.Options.clientDiscovery.Deregister()
+	err := s.clientDiscovery.Deregister()
 	if err != nil {
 		return err
 	}
@@ -109,31 +102,31 @@ func (s *Server) AddDiscovery(client discovery.Discovery) *Server {
 	if client == nil {
 		return nil
 	}
-	s.Options.clientDiscovery = client
+	s.clientDiscovery = client
 	return s
 }
 
 func (s *Server) AddTrace(tracer *tracer.Server) *Server {
-	s.Options.Tracer = tracer
+	s.Tracer = tracer
 	return s
 }
 
 func (s *Server) AddHandler(handler http.Handler) *Server {
-	s.Options.handler = handler
+	s.handler = handler
 	return s
 }
 
 func (s *Server) Run() {
-	addr := fmt.Sprintf("%s:%d", s.Options.Host, s.Options.Port)
-	s.Options.httpServer = http.Server{
+	addr := fmt.Sprintf("%s:%d", s.Host, s.Port)
+	s.httpServer = http.Server{
 		Addr:           addr,
-		Handler:        s.Options.handler,
-		ReadTimeout:    s.Options.readTimeout,
-		WriteTimeout:   s.Options.writerTimeout,
-		MaxHeaderBytes: s.Options.maxHeaderBytes,
+		Handler:        s.handler,
+		ReadTimeout:    s.readTimeout,
+		WriteTimeout:   s.writerTimeout,
+		MaxHeaderBytes: s.maxHeaderBytes,
 	}
 	go func() {
-		if err := s.Options.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			return
 		}
 	}()
@@ -142,75 +135,75 @@ func (s *Server) Run() {
 	systemsignal.HookSignals(s)
 	//s.awaitSignal()
 	select {
-	case _ = <-s.Options.exit:
+	case _ = <-s.exit:
 		os.Exit(0)
 	}
 }
 
 func (s *Server) SetRunMode(mode string) {
-	s.Options.runMode = mode
+	s.runMode = mode
 }
 
 func (s *Server) StopNotify(sig os.Signal) {
-	s.Options.Logger.Info("receive a signal, " + "signal: " + sig.String())
+	s.Logger.Info("receive a signal, " + "signal: " + sig.String())
 	s.stop()
-	if s.Options.Tracer != nil {
-		s.Options.Tracer.Stop(s.Options.Ctx)
+	if s.Tracer != nil {
+		s.Tracer.Stop(s.Ctx)
 	}
 }
 
 func (s *Server) Shutdown() {
-	close(s.Options.exit)
+	close(s.exit)
 }
 
 func (s *Server) stop() {
-	s.Options.Logger.Info("Server is stopping")
+	s.Logger.Info("Server is stopping")
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5) // 平滑关闭,等待5秒钟处理
 	defer cancel()
 	if err := s.deregister(); err != nil {
-		s.Options.Logger.Error("deregister http webserve error", err.Error())
+		s.Logger.Error("deregister http webserve error", err.Error())
 	}
-	if err := s.Options.httpServer.Shutdown(ctx); err != nil {
-		s.Options.Logger.Error("shutdown http webserve error", err.Error())
+	if err := s.httpServer.Shutdown(ctx); err != nil {
+		s.Logger.Error("shutdown http webserve error", err.Error())
 	}
-	s.Options.Logger.Info("Server is stopped.")
+	s.Logger.Info("Server is stopped.")
 }
 
 func (s *Server) printLog() {
-	s.Options.Logger.Info("======================================================================")
+	s.Logger.Info("======================================================================")
 	host, err := host.Info()
 	if err == nil {
-		s.Options.Logger.Info(console_colors.Green("Loading System Info ..."))
-		s.Options.Logger.Info(fmt.Sprintf("hostname                 :  %s", host.Hostname))
-		s.Options.Logger.Info(fmt.Sprintf("uptime                   :  %s", ctime.ResolveTimeSecond(int(host.Uptime))))
-		s.Options.Logger.Info(fmt.Sprintf("bootTime                 :  %s", time.Unix(int64(host.BootTime), 0).Format("2006/01/02 15:04:05")))
-		s.Options.Logger.Info(fmt.Sprintf("procs                    :  %d", host.Procs))
-		s.Options.Logger.Info(fmt.Sprintf("os                       :  %s", host.OS))
-		s.Options.Logger.Info(fmt.Sprintf("platform                 :  %s", host.Platform))
-		s.Options.Logger.Info(fmt.Sprintf("platformFamily           :  %s", host.PlatformFamily))
-		s.Options.Logger.Info(fmt.Sprintf("platformVersion          :  %s", host.PlatformVersion))
-		s.Options.Logger.Info(fmt.Sprintf("kernelVersion            :  %s", host.KernelVersion))
-		s.Options.Logger.Info(fmt.Sprintf("kernelArch               :  %s", host.KernelArch))
+		s.Logger.Info(console_colors.Green("Loading System Info ..."))
+		s.Logger.Info(fmt.Sprintf("hostname                 :  %s", host.Hostname))
+		s.Logger.Info(fmt.Sprintf("uptime                   :  %s", ctime.ResolveTimeSecond(int(host.Uptime))))
+		s.Logger.Info(fmt.Sprintf("bootTime                 :  %s", time.Unix(int64(host.BootTime), 0).Format("2006/01/02 15:04:05")))
+		s.Logger.Info(fmt.Sprintf("procs                    :  %d", host.Procs))
+		s.Logger.Info(fmt.Sprintf("os                       :  %s", host.OS))
+		s.Logger.Info(fmt.Sprintf("platform                 :  %s", host.Platform))
+		s.Logger.Info(fmt.Sprintf("platformFamily           :  %s", host.PlatformFamily))
+		s.Logger.Info(fmt.Sprintf("platformVersion          :  %s", host.PlatformVersion))
+		s.Logger.Info(fmt.Sprintf("kernelVersion            :  %s", host.KernelVersion))
+		s.Logger.Info(fmt.Sprintf("kernelArch               :  %s", host.KernelArch))
 		var cpuType = "Virtual"
 		if host.VirtualizationSystem == "" {
 			cpuType = "Physical"
 		}
-		s.Options.Logger.Info(fmt.Sprintf("virtualizationSystem     :  %s", cpuType))
+		s.Logger.Info(fmt.Sprintf("virtualizationSystem     :  %s", cpuType))
 		if host.VirtualizationRole != "" {
-			s.Options.Logger.Info(fmt.Sprintf("virtualizationRole       :  %s", host.VirtualizationRole))
+			s.Logger.Info(fmt.Sprintf("virtualizationRole       :  %s", host.VirtualizationRole))
 		}
-		s.Options.Logger.Info(fmt.Sprintf("hostId                   :  %s", host.HostID))
+		s.Logger.Info(fmt.Sprintf("hostId                   :  %s", host.HostID))
 	}
-	s.Options.Logger.Info(console_colors.Green(fmt.Sprintf("Welcome to %s, starting application ...", s.Options.ServiceName)))
-	s.Options.Logger.Info(fmt.Sprintf("framework version        :  %s", console_colors.Blue(s.Options.Version)))
-	s.Options.Logger.Info(fmt.Sprintf("serve & protocol         :  %s", console_colors.Green(s.Options.protocol)))
-	s.Options.Logger.Info(fmt.Sprintf("machine host ip          :  %s", console_colors.Blue(s.Options.Host)))
-	s.Options.Logger.Info(fmt.Sprintf("listening on port        :  %s", console_colors.Blue(fmt.Sprintf("%d", s.Options.Port))))
-	s.Options.Logger.Info(fmt.Sprintf("application running pid  :  %s", console_colors.Blue(strconv.Itoa(s.Options.pId))))
-	s.Options.Logger.Info(fmt.Sprintf("application name         :  %s", console_colors.Blue(s.Options.ServiceName)))
-	s.Options.Logger.Info(fmt.Sprintf("application exec path    :  %s", console_colors.Yellow(files.GetCurrentDirectory())))
-	s.Options.Logger.Info(fmt.Sprintf("application environment  :  %s", console_colors.Yellow(console_colors.Blue(s.Options.environment))))
-	s.Options.Logger.Info(fmt.Sprintf("running in %s mode , change (Dev,Test,Prod) mode by Environment .", console_colors.Red(s.Options.environment)))
-	s.Options.Logger.Info(console_colors.Green("Server is Started."))
-	s.Options.Logger.Info("======================================================================")
+	s.Logger.Info(console_colors.Green(fmt.Sprintf("Welcome to %s, starting application ...", s.ServiceName)))
+	s.Logger.Info(fmt.Sprintf("framework version        :  %s", console_colors.Blue(s.Version)))
+	s.Logger.Info(fmt.Sprintf("serve & protocol         :  %s", console_colors.Green(s.protocol)))
+	s.Logger.Info(fmt.Sprintf("machine host ip          :  %s", console_colors.Blue(s.Host)))
+	s.Logger.Info(fmt.Sprintf("listening on port        :  %s", console_colors.Blue(fmt.Sprintf("%d", s.Port))))
+	s.Logger.Info(fmt.Sprintf("application running pid  :  %s", console_colors.Blue(strconv.Itoa(s.pId))))
+	s.Logger.Info(fmt.Sprintf("application name         :  %s", console_colors.Blue(s.ServiceName)))
+	s.Logger.Info(fmt.Sprintf("application exec path    :  %s", console_colors.Yellow(files.GetCurrentDirectory())))
+	s.Logger.Info(fmt.Sprintf("application environment  :  %s", console_colors.Yellow(console_colors.Blue(s.environment))))
+	s.Logger.Info(fmt.Sprintf("running in %s mode , change (Dev,Test,Prod) mode by Environment .", console_colors.Red(s.environment)))
+	s.Logger.Info(console_colors.Green("Server is Started."))
+	s.Logger.Info("======================================================================")
 }

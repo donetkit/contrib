@@ -9,28 +9,28 @@ type Option func(*Server)
 
 // WithServiceName set serviceName function
 func WithServiceName(serviceName string) Option {
-	return func(cfg *Server) {
-		cfg.ServiceName = serviceName
+	return func(s *Server) {
+		s.ServiceName = serviceName
 	}
 }
 
 // WithLogger set logger function
 func WithLogger(logger glog.ILogger) Option {
-	return func(cfg *Server) {
-		cfg.Logger = logger.WithField("Serve", "Serve")
+	return func(s *Server) {
+		s.Logger = logger.WithField("Serve", "Serve")
 	}
 }
 
 // WithVersion set version function
 func WithVersion(version string) Option {
-	return func(cfg *Server) {
-		cfg.Version = version
+	return func(s *Server) {
+		s.Version = version
 	}
 }
 
 // WithProtocol set protocol function
 func WithProtocol(protocol string) Option {
-	return func(cfg *Server) {
-		cfg.protocol = protocol
+	return func(s *Server) {
+		s.protocol = protocol
 	}
 }
