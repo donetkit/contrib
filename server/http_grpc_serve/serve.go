@@ -62,7 +62,7 @@ type Server struct {
 	HTTPListener net.Listener
 	GRPCListener net.Listener
 	httpServer   *http.Server
-	router       *http.ServeMux
+	Router       *http.ServeMux
 	registerHTTP registerFunc
 	registerGRPC registerFunc
 	ServerMux    *runtime.ServeMux
@@ -124,7 +124,7 @@ func New(opts ...Option) *Server {
 
 	//cfg.GServer = grpc.NewServer(gOpts...)
 
-	server.router = http.NewServeMux()
+	server.Router = http.NewServeMux()
 	server.ServerMux = runtime.NewServeMux()
 
 	return server
@@ -135,11 +135,11 @@ func (s *Server) Stop() {
 }
 
 func (s *Server) start() {
-	s.router.Handle("/", s.ServerMux)
+	s.Router.Handle("/", s.ServerMux)
 
 	s.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", s.Host, s.Port),
-		Handler:      s.router,
+		Handler:      s.Router,
 		ReadTimeout:  s.readTimeout,
 		WriteTimeout: s.writerTimeout,
 		IdleTimeout:  s.idleTimeout,
@@ -319,6 +319,6 @@ func (s *Server) AddGrpcServerOption(grpcOpt grpc.ServerOption) *Server {
 
 // AddHandler set handler function
 func (s *Server) AddHandler(pattern string, handler http.Handler) *Server {
-	s.router.Handle(pattern, handler)
+	s.Router.Handle(pattern, handler)
 	return s
 }
