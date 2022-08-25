@@ -32,9 +32,9 @@ func main() {
 
 	//var RedisClient = rredis.NewRedisClient(rredis.WithLogger(logs), rredis.WithAddr("127.0.0.1"), rredis.WithDB(14), rredis.WithPassword(""), rredis.WithTracer(traceServer))
 
-	fullRedis := queue_delay.NewMQRedisDelay(RedisClient, logs)
+	fullRedis := queue_delay.NewDelayQueue(RedisClient, logs)
 	go func() {
-		queue1 := fullRedis.GetRedisDelay(topic)
+		queue1 := fullRedis.GetDelayQueue(topic)
 		for {
 			var msgs = queue1.TakeOne(10)
 			if len(msgs) > 0 {
@@ -58,9 +58,9 @@ type MyModel struct {
 	Name string `json:"name"`
 }
 
-func Public(fullRedis *queue_delay.MQRedisDelay, topic string) {
+func Public(fullRedis *queue_delay.DelayQueue, topic string) {
 	var index = 0
-	queue1 := fullRedis.GetRedisDelay(topic)
+	queue1 := fullRedis.GetDelayQueue(topic)
 	for {
 		queue1.Add(fmt.Sprintf("%d", index), 60)
 		time.Sleep(time.Millisecond * 1000)

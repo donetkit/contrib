@@ -29,7 +29,7 @@ func main() {
 	}
 	var RedisClient = rredis.New(rredis.WithLogger(logs), rredis.WithAddr("127.0.0.1"), rredis.WithDB(13), rredis.WithPassword(""), rredis.WithTracer(traceServer))
 
-	fullRedis := queue_reliable.NewMQRedisReliable(RedisClient, logs)
+	fullRedis := queue_reliable.NewReliableQueue(RedisClient, logs)
 	go func() {
 		queue1 := fullRedis.GetReliableQueue(topic)
 		queue1.DB = 13
@@ -52,7 +52,7 @@ func main() {
 
 }
 
-func Public(fullRedis *queue_reliable.MQRedisReliable, topic string) {
+func Public(fullRedis *queue_reliable.ReliableQueue, topic string) {
 	var index = 0
 	queue1 := fullRedis.GetReliableQueue(topic)
 	queue1.DB = 13
