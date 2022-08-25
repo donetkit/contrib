@@ -3,7 +3,6 @@ package memory
 import (
 	"context"
 	"encoding/gob"
-	"errors"
 	"fmt"
 	icache "github.com/donetkit/contrib/utils/cache"
 	"github.com/go-redis/redis/v8"
@@ -21,6 +20,41 @@ type Cache struct {
 	defaultExpiration time.Duration
 	items             map[string]*item
 	janitor           *janitor
+}
+
+func (c *Cache) SetEX(key string, val interface{}, timeout time.Duration) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) BRPopLPush(source string, destination string, timeout time.Duration) string {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) RPopLPush(source string, destination string) string {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) LRem(key string, count int64, value interface{}) int64 {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) Scan(cursor uint64, match string, count int64) ([]string, uint64) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) SetNX(key string, value interface{}, expiration time.Duration) bool {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Cache) LRange(key string, start int64, stop int64) []string {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (c *Cache) HashGet(key, value string) string {
@@ -63,7 +97,7 @@ func (c *Cache) HashLen(key string) int64 {
 	panic("implement me")
 }
 
-func (c *Cache) LPush(s string, i interface{}) (int64, error) {
+func (c *Cache) LPush(s string, values ...interface{}) int64 {
 	//TODO implement me
 	panic("implement me")
 }
@@ -288,15 +322,20 @@ func (c *Cache) IsExist(k string) bool {
 }
 
 // Delete an item from the cache. Does nothing if the key is not in the cache.
-func (c *Cache) Delete(k string) (int64, error) {
+func (c *Cache) Delete(k ...string) int64 {
 	c.Lock()
 	defer c.Unlock()
-	_, found := c.get(k)
-	if !found {
-		return 0, errors.New("not found")
+	var count int64 = 0
+	for _, val := range k {
+		_, found := c.get(val)
+		if !found {
+			continue
+		}
+		c.delete(val)
+		count++
 	}
-	c.delete(k)
-	return 1, nil
+
+	return count
 }
 
 // Increment an item of type float32 or float64 by n. Returns an error if the

@@ -74,7 +74,7 @@ func (r *RedisDelayQueue) Add(value interface{}, delay int64) int64 {
 	var rs int64
 	for i := 0; i < r.RetryTimesWhenSendFailed; i++ {
 		// 添加到有序集合的成员数量，不包括已经存在更新分数的成员
-		rs = r.client.WithContext(r.ctx).WithContext(r.ctx).ZAdd(r.key, float64(target), value)
+		rs = r.client.WithDB(r.DB).WithContext(r.ctx).ZAdd(r.key, float64(target), value)
 		if rs >= 0 {
 			return rs
 		}
@@ -100,7 +100,7 @@ func (r *RedisDelayQueue) Adds(values ...interface{}) int64 {
 	var rs int64
 	for i := 0; i < r.RetryTimesWhenSendFailed; i++ {
 		// 添加到有序集合的成员数量，不包括已经存在更新分数的成员
-		rs = r.client.WithContext(r.ctx).ZAdd(r.key, float64(target), values)
+		rs = r.client.WithDB(r.DB).WithContext(r.ctx).ZAdd(r.key, float64(target), values)
 		if rs >= 0 {
 			return rs
 		}
@@ -117,7 +117,7 @@ func (r *RedisDelayQueue) Adds(values ...interface{}) int64 {
 
 // Remove 删除项
 func (r *RedisDelayQueue) Remove(value ...interface{}) int64 {
-	return r.client.WithContext(r.ctx).ZRem(r.key, value...)
+	return r.client.WithDB(r.DB).WithContext(r.ctx).ZRem(r.key, value...)
 }
 
 // TakeOne
@@ -132,7 +132,7 @@ func (r *RedisDelayQueue) TakeOne(timeout ...int64) string {
 	for {
 		var score = time.Now().Unix()
 
-		rs := r.client.WithContext(r.ctx).ZRangeByScore(r.key, 0, score, 0, 1)
+		rs := r.client.WithDB(r.DB).WithContext(r.ctx).ZRangeByScore(r.key, 0, score, 0, 1)
 		if len(rs) > 0 && r.TryPop(rs[0]) {
 			return rs[0]
 		}
@@ -158,7 +158,7 @@ func (r *RedisDelayQueue) TakeOneBlock(ctx context.Context, timeout ...int64) st
 	for {
 		var score = time.Now().Unix()
 
-		rs := r.client.WithContext(r.ctx).ZRangeByScore(r.key, 0, score, 0, 1)
+		rs := r.client.WithDB(r.DB).WithContext(r.ctx).ZRangeByScore(r.key, 0, score, 0, 1)
 		if len(rs) > 0 {
 			return rs[0]
 		}
@@ -183,7 +183,7 @@ func (r *RedisDelayQueue) Take(count int64) []string {
 	}
 	var score = time.Now().Unix()
 
-	rs := r.client.WithContext(r.ctx).ZRangeByScore(r.key, 0, score, 0, 1)
+	rs := r.client.WithDB(r.DB).WithContext(r.ctx).ZRangeByScore(r.key, 0, score, 0, 1)
 	if len(rs) <= 0 {
 		return nil
 	}
@@ -216,7 +216,7 @@ func (r *RedisDelayQueue) TransferAsync(ctx context.Context) {
 				return // 退出了...
 			default:
 				var score = time.Now().Unix()
-				rs := r.client.WithContext(r.ctx).ZRangeByScore(r.key, 0, score, 0, 10)
+				rs := r.client.WithDB(r.DB).WithContext(r.ctx).ZRangeByScore(r.key, 0, score, 0, 10)
 				if len(rs) > 0 {
 					// 逐个删除，多线程争夺可能失败
 					var arr []string

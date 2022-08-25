@@ -39,11 +39,23 @@ type ICache interface {
 	WithContext(ctx context.Context) ICache
 	Get(string) interface{}
 	GetString(string) (string, error)
+
 	Set(string, interface{}, time.Duration) error
+	SetEX(key string, val interface{}, timeout time.Duration) error
+
 	IsExist(string) bool
-	Delete(string) (int64, error)
-	LPush(string, interface{}) (int64, error)
+	Delete(key ...string) int64
+
+	LPush(string, ...interface{}) int64
 	RPop(string) interface{}
+
+	BRPopLPush(source string, destination string, timeout time.Duration) string
+	RPopLPush(source string, destination string) string
+	LRem(key string, count int64, value interface{}) int64
+	Scan(cursor uint64, match string, count int64) ([]string, uint64)
+	SetNX(key string, value interface{}, expiration time.Duration) bool
+	LRange(key string, start int64, stop int64) []string
+
 	XRead(key string, startId string, count int64, block int64) []redis.XMessage
 	XAdd(key, msgId string, trim bool, maxLength int64, value interface{}) string
 	XAddKey(key, msgId string, trim bool, maxLength int64, vKey string, value interface{}) string

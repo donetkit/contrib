@@ -57,13 +57,21 @@ func (c *Cache) GetString(key string) (string, error) {
 	return string(data), nil
 }
 
-func (c *Cache) Set(key string, val interface{}, timeout time.Duration) error {
-	data, err := json.Marshal(val)
+func (c *Cache) Set(key string, value interface{}, timeout time.Duration) error {
+	data, err := json.Marshal(value)
 	if err != nil {
 		return err
 	}
 
 	return c.client.Set(c.ctx, key, data, timeout).Err()
+}
+
+func (c *Cache) SetEX(key string, value interface{}, timeout time.Duration) error {
+	data, err := json.Marshal(value)
+	if err != nil {
+		return err
+	}
+	return c.client.SetEX(c.ctx, key, data, timeout).Err()
 }
 
 //IsExist 判断key是否存在
@@ -74,23 +82,23 @@ func (c *Cache) IsExist(key string) bool {
 }
 
 //Delete 删除
-func (c *Cache) Delete(key string) (int64, error) {
+func (c *Cache) Delete(key ...string) int64 {
 
-	cmd := c.client.Del(c.ctx, key)
+	cmd := c.client.Del(c.ctx, key...)
 	if cmd.Err() != nil {
-		return 0, cmd.Err()
+		return 0
 	}
-	return cmd.Val(), nil
+	return cmd.Val()
 }
 
 // LPush 左进
-func (c *Cache) LPush(key string, values interface{}) (int64, error) {
+func (c *Cache) LPush(key string, values ...interface{}) int64 {
 
-	cmd := c.client.LPush(c.ctx, key, values)
+	cmd := c.client.LPush(c.ctx, key, values...)
 	if cmd.Err() != nil {
-		return 0, cmd.Err()
+		return 0
 	}
-	return cmd.Val(), nil
+	return cmd.Val()
 }
 
 // RPop 右出
@@ -105,6 +113,63 @@ func (c *Cache) RPop(key string) interface{} {
 		return nil
 	}
 	return reply
+}
+
+func (c *Cache) BRPopLPush(source string, destination string, timeout time.Duration) string {
+
+	cmd := c.client.BRPopLPush(c.ctx, source, destination, timeout)
+	if cmd.Err() != nil {
+		return ""
+	}
+	return cmd.Val()
+}
+
+func (c *Cache) RPopLPush(source string, destination string) string {
+
+	cmd := c.client.RPopLPush(c.ctx, source, destination)
+	if cmd.Err() != nil {
+		return ""
+	}
+	return cmd.Val()
+}
+
+func (c *Cache) LRem(key string, count int64, value interface{}) int64 {
+
+	cmd := c.client.LRem(c.ctx, key, count, value)
+	if cmd.Err() != nil {
+		return 0
+	}
+	return cmd.Val()
+}
+
+func (c *Cache) Scan(cursor uint64, match string, count int64) ([]string, uint64) {
+
+	cmd := c.client.Scan(c.ctx, cursor, match, count)
+	if cmd.Err() != nil {
+		return nil, 0
+	}
+	return cmd.Val()
+}
+
+func (c *Cache) SetNX(key string, value interface{}, expiration time.Duration) bool {
+	data, err := json.Marshal(value)
+	if err != nil {
+		return false
+	}
+	cmd := c.client.SetNX(c.ctx, key, data, expiration)
+	if cmd.Err() != nil {
+		return false
+	}
+	return cmd.Val()
+}
+
+func (c *Cache) LRange(key string, start int64, stop int64) []string {
+
+	cmd := c.client.LRange(c.ctx, key, start, stop)
+	if cmd.Err() != nil {
+		return nil
+	}
+	return cmd.Val()
 }
 
 // XRead default type []redis.XStream
