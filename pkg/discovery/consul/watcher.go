@@ -2,7 +2,7 @@ package consul
 
 import (
 	"errors"
-	"github.com/donetkit/contrib/discovery/servicediscovery"
+	servicediscovery2 "github.com/donetkit/contrib/pkg/discovery/servicediscovery"
 	"github.com/hashicorp/consul/api"
 	"github.com/hashicorp/consul/api/watch"
 	"sync"
@@ -10,18 +10,18 @@ import (
 
 type Watcher struct {
 	client   *api.Client
-	option   servicediscovery.WatchOptions
+	option   servicediscovery2.WatchOptions
 	wp       *watch.Plan
 	watchers map[string]*watch.Plan
 	exit     chan bool
 	locker   sync.RWMutex
 
-	next     chan *servicediscovery.Result
-	services map[string][]*servicediscovery.Service
+	next     chan *servicediscovery2.Result
+	services map[string][]*servicediscovery2.Service
 }
 
-func newWatcher(client *api.Client, opts ...servicediscovery.WatchOption) (servicediscovery.Watcher, error) {
-	var wo servicediscovery.WatchOptions
+func newWatcher(client *api.Client, opts ...servicediscovery2.WatchOption) (servicediscovery2.Watcher, error) {
+	var wo servicediscovery2.WatchOptions
 	for _, o := range opts {
 		o(&wo)
 	}
@@ -30,9 +30,9 @@ func newWatcher(client *api.Client, opts ...servicediscovery.WatchOption) (servi
 		option:   wo,
 		client:   client,
 		exit:     make(chan bool),
-		next:     make(chan *servicediscovery.Result, 10),
+		next:     make(chan *servicediscovery2.Result, 10),
 		watchers: make(map[string]*watch.Plan),
-		services: make(map[string][]*servicediscovery.Service),
+		services: make(map[string][]*servicediscovery2.Service),
 	}
 
 	wp, err := watch.Parse(map[string]interface{}{"type": "services"})
@@ -47,7 +47,7 @@ func newWatcher(client *api.Client, opts ...servicediscovery.WatchOption) (servi
 	return cw, nil
 }
 
-func (cw *Watcher) Next() (*servicediscovery.Result, error) {
+func (cw *Watcher) Next() (*servicediscovery2.Result, error) {
 	select {
 	case <-cw.exit:
 		return nil, errors.New("watcher stopped")
@@ -105,12 +105,12 @@ func (cw *Watcher) handle(idx uint64, data interface{}) {
 
 			go wp.RunWithClientAndHclog(cw.client, nil)
 			cw.watchers[service] = wp
-			cw.next <- &servicediscovery.Result{Action: "create", Service: &servicediscovery.Service{Name: service}}
+			cw.next <- &servicediscovery2.Result{Action: "create", Service: &servicediscovery2.Service{Name: service}}
 		}
 	}
 	cw.locker.RLock()
 	// make a copy
-	discoveryServices := make(map[string][]*servicediscovery.Service)
+	discoveryServices := make(map[string][]*servicediscovery2.Service)
 	for k, v := range cw.services {
 		discoveryServices[k] = v
 	}
@@ -118,7 +118,7 @@ func (cw *Watcher) handle(idx uint64, data interface{}) {
 
 	// remove unknown services from registry
 	// save the things we want to delete
-	deleted := make(map[string][]*servicediscovery.Service)
+	deleted := make(map[string][]*servicediscovery2.Service)
 
 	for service, _ := range discoveryServices {
 		if _, ok := services[service]; !ok {
@@ -137,10 +137,10 @@ func (cw *Watcher) handle(idx uint64, data interface{}) {
 			delete(cw.watchers, service)
 			for _, oldService := range deleted[service] {
 				// send a delete for the service nodes that we're removing
-				cw.next <- &servicediscovery.Result{Action: "delete", Service: oldService}
+				cw.next <- &servicediscovery2.Result{Action: "delete", Service: oldService}
 			}
 			// sent the empty list as the last resort to indicate to delete the entire service
-			cw.next <- &servicediscovery.Result{Action: "delete", Service: &servicediscovery.Service{Name: service}}
+			cw.next <- &servicediscovery2.Result{Action: "delete", Service: &servicediscovery2.Service{Name: service}}
 		}
 	}
 
@@ -151,7 +151,7 @@ func (cw *Watcher) serviceHandler(idx uint64, data interface{}) {
 	if !ok {
 		return
 	}
-	serviceMap := map[string]*servicediscovery.Service{}
+	serviceMap := map[string]*servicediscovery2.Service{}
 	serviceName := ""
 
 	for _, e := range entries {
@@ -170,7 +170,7 @@ func (cw *Watcher) serviceHandler(idx uint64, data interface{}) {
 
 		svc, ok := serviceMap[key]
 		if !ok {
-			svc = &servicediscovery.Service{
+			svc = &servicediscovery2.Service{
 				Name: e.Service.Service,
 			}
 			serviceMap[key] = svc
@@ -191,7 +191,7 @@ func (cw *Watcher) serviceHandler(idx uint64, data interface{}) {
 			continue
 		}
 
-		svc.Nodes = append(svc.Nodes, &servicediscovery.DefaultServiceInstance{
+		svc.Nodes = append(svc.Nodes, &servicediscovery2.DefaultServiceInstance{
 			Id:          id,
 			ServiceName: serviceName,
 			Host:        address,
@@ -206,13 +206,13 @@ func (cw *Watcher) serviceHandler(idx uint64, data interface{}) {
 
 	cw.locker.RLock()
 	// make a copy
-	discoveryServices := make(map[string][]*servicediscovery.Service)
+	discoveryServices := make(map[string][]*servicediscovery2.Service)
 	for k, v := range cw.services {
 		discoveryServices[k] = v
 	}
 	cw.locker.RUnlock()
 
-	var newServices []*servicediscovery.Service
+	var newServices []*servicediscovery2.Service
 
 	// serviceMap is the new set of services keyed by name+version
 	for _, newService := range serviceMap {
@@ -223,7 +223,7 @@ func (cw *Watcher) serviceHandler(idx uint64, data interface{}) {
 		oldServices, ok := discoveryServices[serviceName]
 		if !ok {
 			// does not exist? then we're creating brand new entries
-			cw.next <- &servicediscovery.Result{Action: "create", Service: newService}
+			cw.next <- &servicediscovery2.Result{Action: "create", Service: newService}
 			continue
 		}
 
@@ -240,7 +240,7 @@ func (cw *Watcher) serviceHandler(idx uint64, data interface{}) {
 			// yes? then it's an update
 			action = "update"
 
-			var nodes []servicediscovery.ServiceInstance
+			var nodes []servicediscovery2.ServiceInstance
 			// check the old nodes to see if they've been deleted
 			for _, oldNode := range oldService.Nodes {
 				var seen bool
@@ -261,11 +261,11 @@ func (cw *Watcher) serviceHandler(idx uint64, data interface{}) {
 			if len(nodes) > 0 {
 				delService := CopyService(oldService)
 				delService.Nodes = nodes
-				cw.next <- &servicediscovery.Result{Action: "delete", Service: delService}
+				cw.next <- &servicediscovery2.Result{Action: "delete", Service: delService}
 			}
 		}
 
-		cw.next <- &servicediscovery.Result{Action: action, Service: newService}
+		cw.next <- &servicediscovery2.Result{Action: action, Service: newService}
 	}
 
 	// Now check old versions that may not be in new services map
@@ -273,7 +273,7 @@ func (cw *Watcher) serviceHandler(idx uint64, data interface{}) {
 		// old version does not exist in new version map
 		// kill it with fire!
 		if _, ok := serviceMap[old.Version]; !ok {
-			cw.next <- &servicediscovery.Result{Action: "delete", Service: old}
+			cw.next <- &servicediscovery2.Result{Action: "delete", Service: old}
 		}
 	}
 
@@ -282,16 +282,16 @@ func (cw *Watcher) serviceHandler(idx uint64, data interface{}) {
 	cw.locker.Unlock()
 }
 
-func CopyService(service *servicediscovery.Service) *servicediscovery.Service {
+func CopyService(service *servicediscovery2.Service) *servicediscovery2.Service {
 	// copy service
-	s := new(servicediscovery.Service)
+	s := new(servicediscovery2.Service)
 	*s = *service
 
 	// copy nodes
-	nodes := make([]servicediscovery.ServiceInstance, len(service.Nodes))
+	nodes := make([]servicediscovery2.ServiceInstance, len(service.Nodes))
 	for j, node := range service.Nodes {
-		n := new(servicediscovery.DefaultServiceInstance)
-		srcNode := node.(*servicediscovery.DefaultServiceInstance)
+		n := new(servicediscovery2.DefaultServiceInstance)
+		srcNode := node.(*servicediscovery2.DefaultServiceInstance)
 		*n = *srcNode
 		nodes[j] = n
 	}

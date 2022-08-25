@@ -2,7 +2,7 @@ package consul
 
 import (
 	"fmt"
-	"github.com/donetkit/contrib/discovery"
+	discovery2 "github.com/donetkit/contrib/pkg/discovery"
 	"github.com/donetkit/contrib/utils/host"
 	"github.com/donetkit/contrib/utils/uuid"
 	consulApi "github.com/hashicorp/consul/api"
@@ -39,11 +39,11 @@ HTTP
 
 type Client struct {
 	client  *consulApi.Client
-	options *discovery.Config
+	options *discovery2.Config
 }
 
-func New(opts ...discovery.Option) (*Client, error) {
-	cfg := &discovery.Config{
+func New(opts ...discovery2.Option) (*Client, error) {
+	cfg := &discovery2.Config{
 		Id:             uuid.NewUUID(),
 		Name:           "Service",
 		RegisterAddr:   "127.0.0.1",
@@ -54,11 +54,11 @@ func New(opts ...discovery.Option) (*Client, error) {
 		IntervalTime:   15,
 		DeregisterTime: 15,
 		TimeOut:        3,
-		CheckResponse:  &discovery.CheckResponse{RetryCount: 3},
+		CheckResponse:  &discovery2.CheckResponse{RetryCount: 3},
 		CheckType:      "TCP",
 	}
 	cfg.CheckResponse.SetHealthy("Healthy")
-	cfg.HttpRouter = func(r *discovery.CheckResponse) {}
+	cfg.HttpRouter = func(r *discovery2.CheckResponse) {}
 	for _, opt := range opts {
 		opt(cfg)
 	}

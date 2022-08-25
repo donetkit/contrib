@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/donetkit/contrib-log/glog"
-	"github.com/donetkit/contrib/discovery"
+	"github.com/donetkit/contrib/pkg/discovery"
 	server2 "github.com/donetkit/contrib/server"
 	"github.com/donetkit/contrib/server/ctime"
 	"github.com/donetkit/contrib/server/systemsignal"
