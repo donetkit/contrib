@@ -5,18 +5,18 @@ import (
 	"github.com/donetkit/contrib/utils/cache"
 )
 
-type MQRedisStream struct {
+type StreamQueue struct {
 	client cache.ICache
 	logger glog.ILogger
 }
 
-func NewMQRedisStream(client cache.ICache, logger glog.ILogger) *MQRedisStream {
-	return &MQRedisStream{
+func NewStreamQueue(client cache.ICache, logger glog.ILogger) *StreamQueue {
+	return &StreamQueue{
 		client: client,
 		logger: logger,
 	}
 }
 
-func (r *MQRedisStream) GetStream(topic string) *RedisStream {
+func (r *StreamQueue) GetStreamQueue(topic string) *RedisStream {
 	return NewRedisStream(r.client, topic, r.logger)
 }

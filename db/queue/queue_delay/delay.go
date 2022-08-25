@@ -36,7 +36,7 @@ type RedisDelayQueue struct {
 	client cache.ICache
 }
 
-func NewRedisDelay(client cache.ICache, key string, logger glog.ILogger) *RedisDelayQueue {
+func New(client cache.ICache, key string, logger glog.ILogger) *RedisDelayQueue {
 	return &RedisDelayQueue{
 		RetryTimesWhenSendFailed:    3,
 		RetryIntervalWhenSendFailed: 1000,

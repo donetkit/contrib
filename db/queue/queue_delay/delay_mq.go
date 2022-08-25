@@ -5,18 +5,18 @@ import (
 	"github.com/donetkit/contrib/utils/cache"
 )
 
-type MQRedisDelay struct {
+type DelayQueue struct {
 	client cache.ICache
 	logger glog.ILogger
 }
 
-func NewMQRedisDelay(client cache.ICache, logger glog.ILogger) *MQRedisDelay {
-	return &MQRedisDelay{
+func NewDelayQueue(client cache.ICache, logger glog.ILogger) *DelayQueue {
+	return &DelayQueue{
 		client: client,
 		logger: logger,
 	}
 }
 
-func (r *MQRedisDelay) GetRedisDelay(topic string) *RedisDelayQueue {
-	return NewRedisDelay(r.client, topic, r.logger)
+func (r *DelayQueue) GetDelayQueue(topic string) *RedisDelayQueue {
+	return New(r.client, topic, r.logger)
 }
