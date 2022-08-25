@@ -18,5 +18,5 @@ func NewStreamQueue(client cache.ICache, logger glog.ILogger) *StreamQueue {
 }
 
 func (r *StreamQueue) GetStreamQueue(topic string) *RedisStream {
-	return NewRedisStream(r.client, topic, r.logger)
+	return New(r.client, topic, r.logger)
 }

@@ -68,7 +68,7 @@ type RedisStream struct {
 	logger glog.ILoggerEntry
 }
 
-func NewRedisStream(client cache.ICache, key string, logger glog.ILogger) *RedisStream {
+func New(client cache.ICache, key string, logger glog.ILogger) *RedisStream {
 	info, _ := host.Info()
 	return &RedisStream{
 		RetryTimesWhenSendFailed:    3,

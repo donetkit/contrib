@@ -18,5 +18,5 @@ func NewReliableQueue(client cache.ICache, logger glog.ILogger) *ReliableQueue {
 }
 
 func (r *ReliableQueue) GetReliableQueue(topic string) *RedisReliableQueue {
-	return NewRedisReliable(r.client, topic, r.logger)
+	return New(r.client, topic, r.logger)
 }

@@ -44,6 +44,7 @@ type RedisReliableQueue struct {
 	IsEmpty                     bool             // 是否为空
 	Status                      RedisQueueStatus // 消费状态
 	logger                      glog.ILoggerEntry
+	l                           glog.ILogger
 	client                      cache.ICache    // Client
 	ctx                         context.Context // Context
 }
@@ -61,7 +62,7 @@ func CreateStatus() RedisQueueStatus {
 	}
 }
 
-func NewRedisReliable(client cache.ICache, key string, logger glog.ILogger) *RedisReliableQueue {
+func New(client cache.ICache, key string, logger glog.ILogger) *RedisReliableQueue {
 	_Key = key
 	_Status = CreateStatus()
 	_StatusKey = fmt.Sprintf("%s:Status:%s", key, _Status.Key)
@@ -71,7 +72,8 @@ func NewRedisReliable(client cache.ICache, key string, logger glog.ILogger) *Red
 		RetryIntervalWhenSendFailed: 1000,
 		RetryInterval:               60,
 		MinPipeline:                 3,
-		logger:                      logger.WithField("MQ_REDIS_DELAY", "MQ_REDIS_DELAY"),
+		logger:                      logger.WithField("mq_redis_reliable", "mq_redis_reliable"),
+		l:                           logger,
 		AckKey:                      fmt.Sprintf("%s:Ack:%s", key, _Status.Key),
 		client:                      client,
 		ctx:                         context.Background(),
@@ -162,7 +164,7 @@ var _delay *queue_delay.RedisDelayQueue
 //  核心工作是启动延迟队列的TransferAsync大循环，每个进程内按队列开一个最合适，多了没有用反而形成争夺。
 func (r *RedisReliableQueue) InitDelay() {
 	if _delay == nil {
-		queue_delay.NewRedisDelay(nil, fmt.Sprintf("%s:Delay", r.key), nil)
+		queue_delay.New(r.client, fmt.Sprintf("%s:Delay", r.key), r.l)
 	}
 	go func() {
 		_delay.TransferAsync(r.ctx)
