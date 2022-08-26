@@ -19,7 +19,7 @@ require (
 	go.opentelemetry.io/otel/metric v0.30.0
 	go.opentelemetry.io/otel/sdk v1.9.0
 	go.opentelemetry.io/otel/trace v1.9.0
-	golang.org/x/sys v0.0.0-20220818161305-2296e01440c6
+	golang.org/x/sys v0.0.0-20220825204002-c680a09ffe64
 	google.golang.org/grpc v1.48.0
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/gorm v1.23.5
