@@ -6,6 +6,7 @@ require (
 	github.com/donetkit/contrib-log v0.2.5
 	github.com/felixge/httpsnoop v1.0.3
 	github.com/go-redis/redis/v8 v8.11.5
+	github.com/goccy/go-json v0.9.11
 	github.com/google/go-cmp v0.5.8
 	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0

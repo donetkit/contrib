@@ -1,6 +1,6 @@
 package gjson
 
-import "encoding/json"
+import "github.com/goccy/go-json"
 
 func Marshal(v any) string {
 	val, err := json.Marshal(v)
