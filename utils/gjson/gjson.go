@@ -10,6 +10,14 @@ func Marshal(v any) string {
 	return string(val)
 }
 
+func MarshalIndent(v any) string {
+	val, err := json.MarshalIndent(v, "", "\t")
+	if err != nil {
+		return ""
+	}
+	return string(val)
+}
+
 func MarshalToByte(v any) []byte {
 	val, err := json.Marshal(v)
 	if err != nil {
