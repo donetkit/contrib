@@ -1,7 +1,7 @@
 //go:build !appengine
 // +build !appengine
 
-package internal
+package gstring
 
 import "unsafe"
 
