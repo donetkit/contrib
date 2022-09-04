@@ -18,11 +18,8 @@ func TestCacheGet(t *testing.T) {
 	if v == nil {
 		t.Error("Found c when it should have been automatically deleted")
 	}
-	v, e := tc.WithDB(0).Delete("test")
-	if e != nil {
-		t.Error("Found c when it should have been automatically deleted")
-	}
-	t.Log(v)
+	v1 := tc.WithDB(0).Delete("test")
+	t.Log(v1)
 }
 
 func BenchmarkCacheGet(b *testing.B) {

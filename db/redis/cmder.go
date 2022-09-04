@@ -3,7 +3,7 @@ package redis
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/donetkit/contrib/internal"
+	"github.com/donetkit/contrib/utils/gstring"
 	"github.com/go-redis/redis/v8"
 	"strconv"
 	"time"
@@ -12,7 +12,7 @@ import (
 func CmdString(cmd redis.Cmder) string {
 	b := make([]byte, 0, 32)
 	b = AppendCmd(b, cmd)
-	return internal.String(b)
+	return gstring.String(b)
 }
 
 func CmdsString(cmds []redis.Cmder) (string, string) {
@@ -45,8 +45,8 @@ func CmdsString(cmds []redis.Cmder) (string, string) {
 		}
 	}
 
-	summary := internal.Join(unqNames, " ")
-	return summary, internal.String(b)
+	summary := gstring.Join(unqNames, " ")
+	return summary, gstring.String(b)
 }
 
 func AppendCmd(b []byte, cmd redis.Cmder) []byte {
@@ -80,7 +80,7 @@ func appendArg(b []byte, v interface{}) []byte {
 		if len(v) > argLenLimit {
 			v = v[:argLenLimit]
 		}
-		return appendUTF8String(b, internal.Bytes(v))
+		return appendUTF8String(b, gstring.Bytes(v))
 	case []byte:
 		if len(v) > argLenLimit {
 			v = v[:argLenLimit]
@@ -172,13 +172,13 @@ func tracerCmdsString(cms []redis.Cmder) []string {
 			unqNames = append(unqNames, name)
 		}
 	}
-	summary := internal.Join(unqNames, " ")
-	result := []string{summary, internal.String(b)}
+	summary := gstring.Join(unqNames, " ")
+	result := []string{summary, gstring.String(b)}
 	return result
 }
 
 func tracerCmdString(cmd redis.Cmder) string {
 	b := make([]byte, 0, 32)
 	b = AppendCmd(b, cmd)
-	return internal.String(b)
+	return gstring.String(b)
 }
