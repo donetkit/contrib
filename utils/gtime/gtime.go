@@ -1,4 +1,4 @@
-package ctime
+package gtime
 
 import "fmt"
 

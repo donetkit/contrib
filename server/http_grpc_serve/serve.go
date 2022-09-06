@@ -6,11 +6,11 @@ import (
 	"github.com/donetkit/contrib-log/glog"
 	"github.com/donetkit/contrib/pkg/discovery"
 	server2 "github.com/donetkit/contrib/server"
-	"github.com/donetkit/contrib/server/ctime"
 	"github.com/donetkit/contrib/server/systemsignal"
 	"github.com/donetkit/contrib/tracer"
 	"github.com/donetkit/contrib/utils/console_colors"
 	"github.com/donetkit/contrib/utils/files"
+	"github.com/donetkit/contrib/utils/gtime"
 	chost "github.com/donetkit/contrib/utils/host"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/shirou/gopsutil/v3/host"
@@ -203,6 +203,9 @@ func (s *Server) NewServer() *Server {
 }
 
 func (s *Server) Run() {
+	if s.GServer == nil {
+		s.NewServer()
+	}
 	addr := fmt.Sprintf("%s:%d", s.Host, s.Port)
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
@@ -270,7 +273,7 @@ func (s *Server) printLog() {
 	if err == nil {
 		s.Logger.Info(console_colors.Green("Loading System Info ..."))
 		s.Logger.Info(fmt.Sprintf("hostname                 :  %s", host.Hostname))
-		s.Logger.Info(fmt.Sprintf("uptime                   :  %s", ctime.ResolveTimeSecond(int(host.Uptime))))
+		s.Logger.Info(fmt.Sprintf("uptime                   :  %s", gtime.ResolveTimeSecond(int(host.Uptime))))
 		s.Logger.Info(fmt.Sprintf("bootTime                 :  %s", time.Unix(int64(host.BootTime), 0).Format("2006/01/02 15:04:05")))
 		s.Logger.Info(fmt.Sprintf("procs                    :  %d", host.Procs))
 		s.Logger.Info(fmt.Sprintf("os                       :  %s", host.OS))
