@@ -15,57 +15,43 @@ import (
 )
 
 type RedisStream struct {
-	DB int
+	ctx context.Context // Context
 
-	// 失败时抛出异常。默认false
-	ThrowOnFailure bool
+	DB int // redis DB 默认为 0
 
-	//发送消息失败时的重试次数。默认3次
-	RetryTimesWhenSendFailed int
+	key string //消息队列key
 
-	// 重试间隔。默认1000ms
-	RetryIntervalWhenSendFailed int
+	Topic string //消息队列主题
 
-	//消息队列主题
-	Topic string
+	ThrowOnFailure bool // 失败时抛出异常。默认false
 
-	ctx context.Context
+	RetryTimesWhenSendFailed int //发送消息失败时的重试次数。默认3次
 
-	key string
+	RetryIntervalWhenSendFailed int // 重试间隔。默认1000ms
 
-	count int64
+	count int64 // 数量
 
-	// 重新处理确认队列中死信的间隔。默认60s
-	RetryInterval int64
+	RetryInterval int64 // 重新处理确认队列中死信的间隔。默认60s
 
-	// 最大队列长度。要保留的消息个数，超过则移除较老消息，非精确，实际上略大于该值，默认100万
-	MaxLength int64
+	MaxLength int64 // 最大队列长度。要保留的消息个数，超过则移除较老消息，非精确，实际上略大于该值，默认100万
 
-	// 最大重试次数。超过该次数后，消息将被抛弃，默认10次
-	MaxRetry int64
+	MaxRetry int64 // 最大重试次数。超过该次数后，消息将被抛弃，默认10次
 
-	// 异步消费时的阻塞时间。默认15秒
-	BlockTime int64
+	BlockTime int64 // 异步消费时的阻塞时间。默认15秒
 
-	// 开始编号。独立消费时使用，消费组消费时不使用，默认0-0
-	StartId string
+	StartId string // 开始编号。独立消费时使用，消费组消费时不使用，默认0-0
 
-	// 消费者组。指定消费组后，不再使用独立消费。通过SetGroup可自动创建消费组
-	Group string
+	Group string // 消费者组。指定消费组后，不再使用独立消费。通过SetGroup可自动创建消费组
 
-	// 消费者
-	consumer string
+	consumer string // 消费者
 
-	client cache.ICache
+	client cache.ICache // redis client
 
-	// 首次消费时的消费策略
-	// 默认值false，表示从头部开始消费，等同于RocketMQ/Java版的CONSUME_FROM_FIRST_OFFSET
-	// 一个新的订阅组第一次启动从队列的最前位置开始消费，后续再启动接着上次消费的进度开始消费。
-	FromLastOffset bool
+	FromLastOffset bool // 首次消费时的消费策略  默认值false，表示从头部开始消费，等同于RocketMQ/Java版的CONSUME_FROM_FIRST_OFFSET  一个新的订阅组第一次启动从队列的最前位置开始消费，后续再启动接着上次消费的进度开始消费。
 
-	setGroupId int64
+	setGroupId int64 // 设置消费组Id
 
-	logger glog.ILoggerEntry
+	logger glog.ILoggerEntry // logger
 }
 
 func New(client cache.ICache, key string, logger glog.ILogger) *RedisStream {
@@ -76,6 +62,7 @@ func New(client cache.ICache, key string, logger glog.ILogger) *RedisStream {
 		logger:                      logger.WithField("MQ-Redis-Stream", "MQ-Redis-Stream"),
 		consumer:                    fmt.Sprintf("%s@%d", info.Hostname, os.Getpid()),
 		key:                         key,
+		Topic:                       key,
 		RetryInterval:               60,
 		MaxLength:                   1_000_000,
 		MaxRetry:                    10,
@@ -128,6 +115,7 @@ func (r *RedisStream) SetGroup(group string) bool {
 	return false
 }
 
+// GetGroups 获取消费分组信息
 func (r *RedisStream) GetGroups() []redis.XInfoGroup {
 	return r.client.WithDB(r.DB).WithContext(r.ctx).XInfoGroups(r.key)
 }
@@ -195,9 +183,7 @@ func (r *RedisStream) GroupDeleteConsumer(group string, consumer string) int64 {
 	return r.client.WithDB(r.DB).WithContext(r.ctx).XGroupDelConsumer(r.key, group, consumer)
 }
 
-// GroupSetId 设置消费组Id
-// group 消费组名称
-// startId 开始编号
+// GroupSetId 设置消费组Id group 消费组名称 startId 开始编号
 func (r *RedisStream) GroupSetId(group string, startId string) bool {
 	if len(group) == 0 {
 		return false
