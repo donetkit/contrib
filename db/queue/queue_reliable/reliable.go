@@ -15,8 +15,8 @@ import (
 	"time"
 )
 
-var _Key string
-var _StatusKey string
+var _Key string       //消息队列key
+var _StatusKey string //Status key
 var _Status RedisQueueStatus
 
 type RedisQueueStatus struct {
@@ -32,21 +32,21 @@ type RedisQueueStatus struct {
 }
 
 type RedisReliableQueue struct {
-	key                         string
-	DB                          int
-	ThrowOnFailure              bool             // 失败时抛出异常。默认false
-	RetryTimesWhenSendFailed    int              //发送消息失败时的重试次数。默认3次
-	RetryIntervalWhenSendFailed int              // 重试间隔。默认1000ms
-	AckKey                      string           // 用于确认的列表
-	RetryInterval               int64            // 重新处理确认队列中死信的间隔。默认60s
-	MinPipeline                 int64            // 最小管道阈值，达到该值时使用管道，默认3
-	count                       int64            // 个数
-	IsEmpty                     bool             // 是否为空
-	Status                      RedisQueueStatus // 消费状态
-	logger                      glog.ILoggerEntry
-	l                           glog.ILogger
-	client                      cache.ICache    // Client
-	ctx                         context.Context // Context
+	ctx                         context.Context   // Context
+	DB                          int               // redis DB 默认为 0
+	key                         string            // 消息队列key
+	ThrowOnFailure              bool              // 失败时抛出异常。默认false
+	RetryTimesWhenSendFailed    int               // 发送消息失败时的重试次数。默认3次
+	RetryIntervalWhenSendFailed int               // 重试间隔。默认1000ms
+	AckKey                      string            // 用于确认的列表
+	RetryInterval               int64             // 重新处理确认队列中死信的间隔。默认60s
+	MinPipeline                 int64             // 最小管道阈值，达到该值时使用管道，默认3
+	count                       int64             // 个数
+	IsEmpty                     bool              // 是否为空
+	Status                      RedisQueueStatus  // 消费状态
+	logger                      glog.ILoggerEntry // logger
+	l                           glog.ILogger      // logger
+	client                      cache.ICache      // cache client
 }
 
 func CreateStatus() RedisQueueStatus {
@@ -357,8 +357,8 @@ func (r *RedisReliableQueue) RollbackAllAck() int64 {
 	for _, key := range keys {
 
 		if !stringArray(&ackKeys, key) {
-			var msgs = r.client.WithDB(r.DB).WithContext(r.ctx).LRange(key, 0, -1)
-			r.logger.Debugf("全局清理死信：%v %v", key, gjson.Marshal(msgs))
+			var msg = r.client.WithDB(r.DB).WithContext(r.ctx).LRange(key, 0, -1)
+			r.logger.Debugf("全局清理死信：%v %v", key, gjson.Marshal(msg))
 			r.client.WithDB(r.DB).WithContext(r.ctx).Delete(key)
 
 		}
