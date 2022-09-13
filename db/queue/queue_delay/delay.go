@@ -9,31 +9,17 @@ import (
 )
 
 type RedisDelayQueue struct {
-	DB int
-
-	// 失败时抛出异常。默认false
-	ThrowOnFailure bool
-
-	//发送消息失败时的重试次数。默认3次
-	RetryTimesWhenSendFailed int
-
-	// 重试间隔。默认1000ms
-	RetryIntervalWhenSendFailed int
-
-	//消息队列主题
-	Topic string
-
-	key string
-	ctx context.Context
-	// 转移延迟消息到主队列的间隔。默认10s
-	TransferInterval int64
-
-	// 默认延迟时间。默认60秒
-	Delay int64
-
-	logger glog.ILoggerEntry
-
-	client cache.ICache
+	ctx                         context.Context   // Context
+	DB                          int               // redis DB 默认为 0
+	key                         string            // 消息队列key
+	Topic                       string            // 消息队列主题
+	ThrowOnFailure              bool              // 失败时抛出异常。默认false
+	RetryTimesWhenSendFailed    int               // 发送消息失败时的重试次数。默认3次
+	RetryIntervalWhenSendFailed int               // 重试间隔。默认1000ms
+	TransferInterval            int64             // 转移延迟消息到主队列的间隔。默认10s
+	Delay                       int64             // 默认延迟时间。默认60秒
+	logger                      glog.ILoggerEntry // logger
+	client                      cache.ICache      // cache client
 }
 
 func New(client cache.ICache, key string, logger glog.ILogger) *RedisDelayQueue {
@@ -44,13 +30,9 @@ func New(client cache.ICache, key string, logger glog.ILogger) *RedisDelayQueue 
 		key:                         key,
 		TransferInterval:            10,
 		Delay:                       60,
-		//MaxLength:                   1_000_000,
-		//MaxRetry:                    10,
-		//BlockTime:                   15,
-		//StartId:                     "0-0",
-		Topic:  key,
-		client: client,
-		ctx:    context.Background(),
+		Topic:                       key,
+		client:                      client,
+		ctx:                         context.Background(),
 	}
 }
 
