@@ -170,40 +170,41 @@ func (s *Server) stop() {
 }
 
 func (s *Server) printLog() {
-	s.Logger.Info("======================================================================")
+	fmt.Println("======================================================================")
 	host, err := host.Info()
 	if err == nil {
-		s.Logger.Info(console_colors.Green("Loading System Info ..."))
-		s.Logger.Info(fmt.Sprintf("hostname                 :  %s", host.Hostname))
-		s.Logger.Info(fmt.Sprintf("uptime                   :  %s", gtime.ResolveTimeSecond(int(host.Uptime))))
-		s.Logger.Info(fmt.Sprintf("bootTime                 :  %s", time.Unix(int64(host.BootTime), 0).Format("2006/01/02 15:04:05")))
-		s.Logger.Info(fmt.Sprintf("procs                    :  %d", host.Procs))
-		s.Logger.Info(fmt.Sprintf("os                       :  %s", host.OS))
-		s.Logger.Info(fmt.Sprintf("platform                 :  %s", host.Platform))
-		s.Logger.Info(fmt.Sprintf("platformFamily           :  %s", host.PlatformFamily))
-		s.Logger.Info(fmt.Sprintf("platformVersion          :  %s", host.PlatformVersion))
-		s.Logger.Info(fmt.Sprintf("kernelVersion            :  %s", host.KernelVersion))
-		s.Logger.Info(fmt.Sprintf("kernelArch               :  %s", host.KernelArch))
+		fmt.Println(console_colors.Green("Loading System Info ..."))
+		fmt.Println(fmt.Sprintf("hostname                 :  %s", host.Hostname))
+		fmt.Println(fmt.Sprintf("uptime                   :  %s", gtime.ResolveTimeSecond(int(host.Uptime))))
+		fmt.Println(fmt.Sprintf("bootTime                 :  %s", time.Unix(int64(host.BootTime), 0).Format("2006/01/02 15:04:05")))
+		fmt.Println(fmt.Sprintf("procs                    :  %d", host.Procs))
+		fmt.Println(fmt.Sprintf("os                       :  %s", host.OS))
+		fmt.Println(fmt.Sprintf("platform                 :  %s", host.Platform))
+		fmt.Println(fmt.Sprintf("platformFamily           :  %s", host.PlatformFamily))
+		fmt.Println(fmt.Sprintf("platformVersion          :  %s", host.PlatformVersion))
+		fmt.Println(fmt.Sprintf("kernelVersion            :  %s", host.KernelVersion))
+		fmt.Println(fmt.Sprintf("kernelArch               :  %s", host.KernelArch))
 		var cpuType = "Virtual"
 		if host.VirtualizationSystem == "" {
 			cpuType = "Physical"
 		}
-		s.Logger.Info(fmt.Sprintf("virtualizationSystem     :  %s", cpuType))
+		fmt.Println(fmt.Sprintf("virtualizationSystem     :  %s", cpuType))
 		if host.VirtualizationRole != "" {
-			s.Logger.Info(fmt.Sprintf("virtualizationRole       :  %s", host.VirtualizationRole))
+			fmt.Println(fmt.Sprintf("virtualizationRole       :  %s", host.VirtualizationRole))
 		}
-		s.Logger.Info(fmt.Sprintf("hostId                   :  %s", host.HostID))
+		fmt.Println(fmt.Sprintf("hostId                   :  %s", host.HostID))
 	}
-	s.Logger.Info(console_colors.Green(fmt.Sprintf("Welcome to %s, starting application ...", s.ServiceName)))
-	s.Logger.Info(fmt.Sprintf("framework version        :  %s", console_colors.Blue(s.Version)))
-	s.Logger.Info(fmt.Sprintf("serve & protocol         :  %s", console_colors.Green(s.protocol)))
-	s.Logger.Info(fmt.Sprintf("machine host ip          :  %s", console_colors.Blue(s.Host)))
-	s.Logger.Info(fmt.Sprintf("listening on port        :  %s", console_colors.Blue(fmt.Sprintf("%d", s.Port))))
-	s.Logger.Info(fmt.Sprintf("application running pid  :  %s", console_colors.Blue(strconv.Itoa(s.pId))))
-	s.Logger.Info(fmt.Sprintf("application name         :  %s", console_colors.Blue(s.ServiceName)))
-	s.Logger.Info(fmt.Sprintf("application exec path    :  %s", console_colors.Yellow(files.GetCurrentDirectory())))
-	s.Logger.Info(fmt.Sprintf("application environment  :  %s", console_colors.Yellow(console_colors.Blue(s.environment))))
-	s.Logger.Info(fmt.Sprintf("running in %s mode , change (Dev,Test,Prod) mode by Environment .", console_colors.Red(s.environment)))
-	s.Logger.Info(console_colors.Green("Server is Started."))
-	s.Logger.Info("======================================================================")
+
+	fmt.Println(console_colors.Green(fmt.Sprintf("Welcome to %s, starting application ...", s.ServiceName)))
+	fmt.Println(fmt.Sprintf("framework version        :  %s", console_colors.Blue(s.Version)))
+	fmt.Println(fmt.Sprintf("serve & protocol         :  %s", console_colors.Green(s.protocol)))
+	fmt.Println(fmt.Sprintf("machine host ip          :  %s", console_colors.Blue(s.Host)))
+	fmt.Println(fmt.Sprintf("listening on port        :  %s", console_colors.Blue(fmt.Sprintf("%d", s.Port))))
+	fmt.Println(fmt.Sprintf("application running pid  :  %s", console_colors.Blue(strconv.Itoa(s.pId))))
+	fmt.Println(fmt.Sprintf("application name         :  %s", console_colors.Blue(s.ServiceName)))
+	fmt.Println(fmt.Sprintf("application exec path    :  %s", console_colors.Yellow(files.GetCurrentDirectory())))
+	fmt.Println(fmt.Sprintf("application environment  :  %s", console_colors.Yellow(console_colors.Blue(s.environment))))
+	fmt.Println(fmt.Sprintf("running in %s mode , change (Dev,Test,Prod) mode by Environment .", console_colors.Red(s.environment)))
+	fmt.Println(console_colors.Green("Server is Started."))
+	fmt.Println("======================================================================")
 }
