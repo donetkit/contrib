@@ -2,6 +2,7 @@ package gstring
 
 import (
 	"testing"
+	"time"
 )
 
 func TestIDCode(t *testing.T) {
@@ -18,4 +19,16 @@ func TestIDCode(t *testing.T) {
 			t.Errorf("id:%v code:%v failed", id, string(code))
 		}
 	}
+}
+
+func TestIDCodeTimespan(t *testing.T) {
+	id := time.Now().Unix()
+	code := GenCodeReverse(id)
+	value, err := CodeToIDReverse(code)
+	if err == nil && value == id {
+		t.Logf("id:%v code:%v pass", id, code)
+	} else {
+		t.Errorf("id:%v code:%v failed", id, code)
+	}
+
 }

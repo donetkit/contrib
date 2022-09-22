@@ -5,6 +5,9 @@ package gstring
 import (
 	"container/list"
 	"errors"
+	"fmt"
+	"math"
+	"strconv"
 )
 
 var baseCodeStr = "0123456789ABCDEFGHJKLMNPQRSTUVWXYZ"
@@ -77,5 +80,69 @@ func CodeToIDBase34(idByte []byte) (uint64, error) {
 		r++
 	}
 
+	return res, nil
+}
+
+// Reverse 字符串翻转
+func Reverse(x int64) int64 {
+	result := ""
+	abs := int(math.Abs(float64(x)))
+	str := strconv.Itoa(abs)
+	for i := len(str) - 1; i >= 0; i-- {
+		result = result + string(str[i])
+	}
+
+	if x < 0 {
+		result = "-" + result
+	}
+
+	resultInt, err := strconv.Atoi(result)
+	if err != nil || resultInt == 0 {
+		return x
+	}
+
+	return int64(resultInt)
+}
+
+// GenCodeReverse 将id转换成n位长度的code
+func GenCodeReverse(id int64) string {
+	code := GenCodeBase34(uint64(Reverse(id)))
+	return string(code)
+}
+
+// CodeToIDReverse -- 将code逆向转换成原始id
+func CodeToIDReverse(code string) (int64, error) {
+	if len(code) == 0 {
+		return 0, fmt.Errorf("code is not empty")
+	}
+	id := []byte(code)
+	baseCodeByte := []byte(baseCodeStr)
+	baseMap := make(map[byte]int)
+	for i, v := range baseCodeByte {
+		baseMap[v] = i
+	}
+
+	if id == nil || len(id) == 0 {
+		return 0, errors.New("param id nil or empyt")
+	}
+
+	var res int64
+	var r int64
+
+	for i := len(id) - 1; i >= 0; i-- {
+		v, ok := baseMap[id[i]]
+		if !ok {
+			return 0, errors.New("param contain illegle character")
+		}
+
+		var b int64 = 1
+		for j := int64(0); j < r; j++ {
+			b *= 34
+		}
+
+		res += b * int64(v)
+		r++
+	}
+	res = Reverse(res)
 	return res, nil
 }
