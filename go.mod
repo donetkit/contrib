@@ -1,6 +1,6 @@
 module github.com/donetkit/contrib
 
-go 1.18
+go 1.19
 
 require (
 	github.com/donetkit/contrib-log v0.2.5
