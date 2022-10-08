@@ -161,7 +161,8 @@ var _delay *queue_delay.RedisDelayQueue
 
 // InitDelay 初始化延迟队列功能。生产者自动初始化，消费者最好能够按队列初始化一次
 // 该功能是附加功能，需要消费者主动调用，每个队列的多消费者开一个即可。
-//  核心工作是启动延迟队列的TransferAsync大循环，每个进程内按队列开一个最合适，多了没有用反而形成争夺。
+//
+//	核心工作是启动延迟队列的TransferAsync大循环，每个进程内按队列开一个最合适，多了没有用反而形成争夺。
 func (r *RedisReliableQueue) InitDelay() {
 	if _delay == nil {
 		queue_delay.New(r.client, fmt.Sprintf("%s:Delay", r.key), r.l)
@@ -178,7 +179,9 @@ func (r *RedisReliableQueue) AddDelay(value interface{}, delay int64) int64 {
 }
 
 // Publish 高级生产消息。消息体和消息键分离，业务层指定消息键，可随时查看或删除，同时避免重复生产
-//  Publish 必须跟 ConsumeAsync 配对使用。
+//
+//	Publish 必须跟 ConsumeAsync 配对使用。
+//
 // messages 消息字典，id为键，消息体为值
 // expire 消息体过期时间，单位秒
 func (r *RedisReliableQueue) Publish(messages map[string]interface{}, expire int64) int64 {
@@ -252,8 +255,8 @@ func (r *RedisReliableQueue) TakeAck(count ...int) []string {
 	var rs []string
 	for i := 0; i < cCount; i++ {
 		result := r.client.WithDB(r.DB).WithContext(r.ctx).RPop(r.AckKey)
-		if result != nil {
-			rs = append(rs, result.(string))
+		if result != "" {
+			rs = append(rs, result)
 		}
 	}
 	return rs

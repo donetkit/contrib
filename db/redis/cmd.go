@@ -74,14 +74,14 @@ func (c *Cache) SetEX(key string, value interface{}, timeout time.Duration) erro
 	return c.client.SetEX(c.ctx, key, data, timeout).Err()
 }
 
-//IsExist 判断key是否存在
+// IsExist 判断key是否存在
 func (c *Cache) IsExist(key string) bool {
 
 	i := c.client.Exists(c.ctx, key).Val()
 	return i > 0
 }
 
-//Delete 删除
+// Delete 删除
 func (c *Cache) Delete(key ...string) int64 {
 
 	cmd := c.client.Del(c.ctx, key...)
@@ -102,21 +102,15 @@ func (c *Cache) LPush(key string, values ...interface{}) int64 {
 }
 
 // RPop 右出
-func (c *Cache) RPop(key string) interface{} {
-
+func (c *Cache) RPop(key string) string {
 	cmd := c.client.RPop(c.ctx, key)
 	if cmd.Err() != nil {
-		return nil
+		return ""
 	}
-	var reply interface{}
-	if err := json.Unmarshal([]byte(cmd.Val()), &reply); err != nil {
-		return nil
-	}
-	return reply
+	return cmd.Val()
 }
 
 func (c *Cache) BRPopLPush(source string, destination string, timeout time.Duration) string {
-
 	cmd := c.client.BRPopLPush(c.ctx, source, destination, timeout)
 	if cmd.Err() != nil {
 		return ""
@@ -125,7 +119,6 @@ func (c *Cache) BRPopLPush(source string, destination string, timeout time.Durat
 }
 
 func (c *Cache) RPopLPush(source string, destination string) string {
-
 	cmd := c.client.RPopLPush(c.ctx, source, destination)
 	if cmd.Err() != nil {
 		return ""
@@ -134,7 +127,6 @@ func (c *Cache) RPopLPush(source string, destination string) string {
 }
 
 func (c *Cache) LRem(key string, count int64, value interface{}) int64 {
-
 	cmd := c.client.LRem(c.ctx, key, count, value)
 	if cmd.Err() != nil {
 		return 0

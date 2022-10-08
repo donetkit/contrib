@@ -102,7 +102,7 @@ func (c *Cache) LPush(s string, values ...interface{}) int64 {
 	panic("implement me")
 }
 
-func (c *Cache) RPop(s string) interface{} {
+func (c *Cache) RPop(s string) string {
 	//TODO implement me
 	panic("implement me")
 }

@@ -47,7 +47,7 @@ type ICache interface {
 	Delete(key ...string) int64
 
 	LPush(string, ...interface{}) int64
-	RPop(string) interface{}
+	RPop(string) string
 
 	BRPopLPush(source string, destination string, timeout time.Duration) string
 	RPopLPush(source string, destination string) string
