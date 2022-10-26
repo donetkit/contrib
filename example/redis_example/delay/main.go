@@ -6,7 +6,6 @@ import (
 	"github.com/donetkit/contrib/db/queue/queue_delay"
 	rredis "github.com/donetkit/contrib/db/redis"
 	"github.com/donetkit/contrib/tracer"
-	"github.com/go-redis/redis/v8"
 	"time"
 )
 
@@ -32,19 +31,19 @@ func main() {
 
 	//var RedisClient = rredis.NewRedisClient(rredis.WithLogger(logs), rredis.WithAddr("127.0.0.1"), rredis.WithDB(14), rredis.WithPassword(""), rredis.WithTracer(traceServer))
 
-	fullRedis := queue_delay.NewDelayQueue(RedisClient, logs)
+	delayQueue := queue_delay.NewDelayQueue(RedisClient, logs)
 	go func() {
-		queue1 := fullRedis.GetDelayQueue(topic)
+		queue1 := delayQueue.GetDelayQueue(topic)
 		for {
-			var msgs = queue1.TakeOne(10)
-			if len(msgs) > 0 {
-				fmt.Println(msgs)
+			var msg = queue1.TakeOne(10)
+			if len(msg) > 0 {
+				fmt.Println(msg)
 			}
 		}
 	}()
 
 	go func() {
-		Public(fullRedis, topic)
+		Public(delayQueue, topic)
 	}()
 
 	//cancel()
@@ -53,30 +52,15 @@ func main() {
 
 }
 
-type MyModel struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
-}
-
-func Public(fullRedis *queue_delay.DelayQueue, topic string) {
+func Public(delayQueue *queue_delay.DelayQueue, topic string) {
 	var index = 0
-	queue1 := fullRedis.GetDelayQueue(topic)
+	queue := delayQueue.GetDelayQueue(topic)
 	for {
-		queue1.Add(fmt.Sprintf("%d", index), 60)
+		queue.Add(fmt.Sprintf("%d", index), 60)
 		time.Sleep(time.Millisecond * 1000)
 		index++
 		if index > 20 {
 			break
 		}
 	}
-}
-
-func Consumer1(msg []redis.XMessage) bool {
-	logs.Debug("==========Consumer1==========", msg)
-	return true
-}
-
-func Consumer2(msg []redis.XMessage) bool {
-	logs.Debug("==========Consumer2==========", msg)
-	return true
 }
