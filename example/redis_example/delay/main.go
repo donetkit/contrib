@@ -18,7 +18,6 @@ const (
 var logs = glog.New()
 
 func main() {
-	//ctx, _ := context.WithCancel(context.Background())
 	var traceServer *tracer.Server
 
 	fs := tracer.NewFallbackSampler(1)
@@ -45,8 +44,6 @@ func main() {
 	go func() {
 		Public(delayQueue, topic)
 	}()
-
-	//cancel()
 
 	time.Sleep(time.Second * 3600)
 
