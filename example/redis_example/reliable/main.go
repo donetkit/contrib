@@ -27,11 +27,11 @@ func main() {
 		jaeger := tracer.Jaeger{}
 		traceServer = tracer.New(tracer.WithName(service), tracer.WithProvider(tp), tracer.WithPropagators(jaeger))
 	}
-	var RedisClient = rredis.New(rredis.WithLogger(logs), rredis.WithAddr("127.0.0.1"), rredis.WithDB(13), rredis.WithPassword(""), rredis.WithTracer(traceServer))
+	var redisClient = rredis.New(rredis.WithLogger(logs), rredis.WithAddr("127.0.0.1"), rredis.WithDB(13), rredis.WithPassword(""), rredis.WithTracer(traceServer))
 
-	fullRedis := queue_reliable.NewReliableQueue(RedisClient, logs)
+	queueReliable := queue_reliable.NewReliableQueue(redisClient, logs)
 	go func() {
-		queue1 := fullRedis.GetReliableQueue(topic)
+		queue1 := queueReliable.GetReliableQueue(topic)
 		queue1.DB = 13
 		// 清空
 		//queue1.ClearAllAck()
@@ -46,18 +46,18 @@ func main() {
 	}()
 
 	go func() {
-		Public(fullRedis, topic)
+		Public(queueReliable, topic)
 	}()
 	time.Sleep(time.Second * 3600)
 
 }
 
-func Public(fullRedis *queue_reliable.ReliableQueue, topic string) {
+func Public(queueReliable *queue_reliable.ReliableQueue, topic string) {
 	var index = 0
-	queue1 := fullRedis.GetReliableQueue(topic)
-	queue1.DB = 13
+	queue := queueReliable.GetReliableQueue(topic)
+	queue.DB = 13
 	for {
-		queue1.Add(fmt.Sprintf("%d", index), 60)
+		queue.Add(fmt.Sprintf("%d", index), 60)
 		time.Sleep(time.Millisecond * 50)
 		index++
 		if index > 20 {
