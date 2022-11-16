@@ -204,7 +204,7 @@ func (s *Server) printLog() {
 	fmt.Println(fmt.Sprintf("application name         :  %s", console_colors.Blue(s.ServiceName)))
 	fmt.Println(fmt.Sprintf("application exec path    :  %s", console_colors.Yellow(files.GetCurrentDirectory())))
 	fmt.Println(fmt.Sprintf("application environment  :  %s", console_colors.Yellow(console_colors.Blue(s.environment))))
-	fmt.Println(fmt.Sprintf("running in %s mode , change (Dev,Test,Prod) mode by Environment .", console_colors.Red(s.environment)))
+	fmt.Println(fmt.Sprintf("running in %s mode change ( Dev | Test | Prod ) mode by Environment .", console_colors.Red(s.environment)))
 	fmt.Println(console_colors.Green("Server is Started."))
 	fmt.Println("======================================================================")
 }
