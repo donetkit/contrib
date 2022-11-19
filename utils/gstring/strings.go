@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 	"unicode"
+	"unicode/utf8"
 )
 
 // RandomString fun
@@ -134,4 +135,9 @@ func LowercaseFirst(str string) string {
 		return string(unicode.ToLower(v)) + str[i+1:]
 	}
 	return ""
+}
+
+// Len 字符串长度，包括控制码，一个汉字长度1
+func Len(str string) int {
+	return utf8.RuneCountInString(str)
 }

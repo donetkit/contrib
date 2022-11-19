@@ -2,6 +2,29 @@ package gstring
 
 import "testing"
 
+func TestStringLen(t *testing.T) {
+	var str = "Test"
+	v := Len(str)
+	if v != 4 {
+		t.Error("error")
+	}
+	str = "你好HL"
+	v = Len(str)
+	if v != 4 {
+		t.Error("error")
+	}
+	str = "你好@,"
+	v = Len(str)
+	if v != 4 {
+		t.Error("error")
+	}
+	str = "你1好?"
+	v = Len(str)
+	if v != 4 {
+		t.Error("error")
+	}
+}
+
 func TestLowercaseFirst(t *testing.T) {
 	var str = "TestLowercaseFirst"
 	v := LowercaseFirst(str)
