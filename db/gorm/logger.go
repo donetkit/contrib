@@ -27,7 +27,7 @@ func (l *LogSql) Info(ctx context.Context, msg string, data ...interface{}) {
 	if l.Logger == nil {
 		return
 	}
-	l.Logger.Infof(fmt.Sprintf(infoStr, utils.FileWithLineNum())+msg, data...)
+	l.Logger.Debugf(fmt.Sprintf(infoStr, utils.FileWithLineNum())+msg, data...)
 }
 
 func (l *LogSql) Warn(ctx context.Context, msg string, data ...interface{}) {
