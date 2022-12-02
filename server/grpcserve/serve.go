@@ -261,3 +261,7 @@ func (s *Server) AddGrpcServerOption(grpcOpt grpc.ServerOption) *Server {
 	s.grpcOpts = append(s.grpcOpts, grpcOpt)
 	return s
 }
+
+func (s *Server) PrintHostInfo() {
+	s.printLog()
+}

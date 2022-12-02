@@ -5,5 +5,6 @@ import (
 )
 
 func main() {
+	consoleserve.New().PrintHostInfo()
 	consoleserve.New().Run()
 }

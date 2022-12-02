@@ -325,3 +325,7 @@ func (s *Server) AddHandler(pattern string, handler http.Handler) *Server {
 	s.Router.Handle(pattern, handler)
 	return s
 }
+
+func (s *Server) PrintHostInfo() {
+	s.printLog()
+}

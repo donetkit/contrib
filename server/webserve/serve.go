@@ -208,3 +208,7 @@ func (s *Server) printLog() {
 	fmt.Println(console_colors.Green("Server is Started."))
 	fmt.Println("======================================================================")
 }
+
+func (s *Server) PrintHostInfo() {
+	s.printLog()
+}
