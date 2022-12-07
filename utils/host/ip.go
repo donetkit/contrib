@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// GetOutBoundIp 获取本地IP
+// GetOutBoundIp 获取本地外网IP
 func GetOutBoundIp() string {
 	conn, err := net.Dial("udp", "8.8.8.8:53")
 	if err == nil {
