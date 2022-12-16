@@ -265,3 +265,8 @@ func (s *Server) AddGrpcServerOption(grpcOpt grpc.ServerOption) *Server {
 func (s *Server) PrintHostInfo() {
 	s.printLog()
 }
+
+func (s *Server) HostInfo() *host.InfoStat {
+	host, _ := host.Info()
+	return host
+}

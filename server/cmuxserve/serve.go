@@ -205,3 +205,8 @@ func (s *Server) printLog() {
 func (s *Server) PrintHostInfo() {
 	s.printLog()
 }
+
+func (s *Server) HostInfo() *host.InfoStat {
+	host, _ := host.Info()
+	return host
+}

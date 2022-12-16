@@ -329,3 +329,8 @@ func (s *Server) AddHandler(pattern string, handler http.Handler) *Server {
 func (s *Server) PrintHostInfo() {
 	s.printLog()
 }
+
+func (s *Server) HostInfo() *host.InfoStat {
+	host, _ := host.Info()
+	return host
+}
