@@ -31,6 +31,20 @@ func GenerateNonce() (string, error) {
 	return string(bytes), nil
 }
 
+// GenerateNonceLength 生成一个长度为 Length 的随机字符串（只包含大小写字母与数字）
+func GenerateNonceLength(Length int) (string, error) {
+	bytes := make([]byte, Length)
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return "", err
+	}
+	symbolsByteLength := byte(len(NonceSymbols))
+	for i, b := range bytes {
+		bytes[i] = NonceSymbols[b%symbolsByteLength]
+	}
+	return string(bytes), nil
+}
+
 // RandomString fun
 func RandomString(length int) string {
 	b := []byte(NonceSymbols)
