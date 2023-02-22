@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"reflect"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 	"unicode"
@@ -174,4 +175,120 @@ func LowercaseFirst(str string) string {
 // Len 字符串长度，包括控制码，一个汉字长度1
 func Len(str string) int {
 	return utf8.RuneCountInString(str)
+}
+
+func SubString(str string, begin, length int) string {
+	rs := []rune(str)
+	lth := len(rs)
+	if begin < 0 {
+		begin = 0
+	}
+	if begin >= lth {
+		begin = lth
+	}
+	end := begin + length
+
+	if end > lth {
+		end = lth
+	}
+	return string(rs[begin:end])
+}
+
+func StringToIntArray(arr []string) []int {
+	var result = make([]int, len(arr))
+	for index, val := range arr {
+		result[index], _ = strconv.Atoi(val)
+	}
+	return result
+}
+
+func IntToStringArray(arr []int) []string {
+	var result = make([]string, len(arr))
+	for index, val := range arr {
+		result[index] = strconv.Itoa(val)
+	}
+	return result
+}
+
+// RemoveRepeatSliceInt 元素去重
+func RemoveRepeatSliceInt(slc []int) []int {
+	if len(slc) <= 0 {
+		return slc
+	}
+	if len(slc) < 1024 {
+		// 切片长度小于1024的时候，循环来过滤
+		return removeDuplicatesAndEmptyInt(slc)
+	} else {
+		// 大于的时候，通过map来过滤
+		return removeDuplicateInt(slc)
+	}
+}
+
+// 去除重复字符串和空格
+func removeDuplicatesAndEmptyInt(a []int) (ret []int) {
+	alen := len(a)
+	for i := 0; i < alen; i++ {
+		if i > 0 && a[i-1] == a[i] {
+			continue
+		}
+		ret = append(ret, a[i])
+	}
+	return
+}
+
+// 通过map主键唯一的特性过滤重复元素
+func removeDuplicateInt(arr []int) []int {
+	resArr := make([]int, 0)
+	tmpMap := make(map[int]interface{})
+	for _, val := range arr {
+		//判断主键为val的map是否存在
+		if _, ok := tmpMap[val]; !ok {
+			resArr = append(resArr, val)
+			tmpMap[val] = nil
+		}
+	}
+	return resArr
+}
+
+// RemoveRepeatSlice 元素去重
+func RemoveRepeatSlice(slc []string) []string {
+	if len(slc) <= 0 {
+		return slc
+	}
+	if len(slc) < 1024 {
+		// 切片长度小于1024的时候，循环来过滤
+		return removeDuplicatesAndEmpty(slc)
+	} else {
+		// 大于的时候，通过map来过滤
+		return removeDuplicate(slc)
+	}
+}
+
+// 去除重复字符串和空格
+func removeDuplicatesAndEmpty(a []string) (ret []string) {
+	alen := len(a)
+	for i := 0; i < alen; i++ {
+		if (i > 0 && a[i-1] == a[i]) || len(a[i]) == 0 {
+			continue
+		}
+		ret = append(ret, a[i])
+	}
+	return
+}
+
+// 通过map主键唯一的特性过滤重复元素
+func removeDuplicate(arr []string) []string {
+	resArr := make([]string, 0)
+	tmpMap := make(map[string]interface{})
+	for _, val := range arr {
+		if len(val) == 0 {
+			continue
+		}
+		//判断主键为val的map是否存在
+		if _, ok := tmpMap[val]; !ok {
+			resArr = append(resArr, val)
+			tmpMap[val] = nil
+		}
+	}
+	return resArr
 }
