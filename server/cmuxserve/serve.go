@@ -168,8 +168,8 @@ func (s *Server) printLog() {
 	host, err := host.Info()
 	if err == nil {
 		s.Logger.Info(console_colors.Green("Loading System Info ..."))
-		s.Logger.Info(fmt.Sprintf("hostname                 :  %s", host.Hostname))
-		s.Logger.Info(fmt.Sprintf("uptime                   :  %s", gtime.ResolveTimeSecond(int(host.Uptime))))
+		s.Logger.Info(fmt.Sprintf("hostName                 :  %s", host.Hostname))
+		s.Logger.Info(fmt.Sprintf("upTime                   :  %s", gtime.ResolveTimeSecond(int(host.Uptime))))
 		s.Logger.Info(fmt.Sprintf("bootTime                 :  %s", time.Unix(int64(host.BootTime), 0).Format("2006/01/02 15:04:05")))
 		s.Logger.Info(fmt.Sprintf("procs                    :  %d", host.Procs))
 		s.Logger.Info(fmt.Sprintf("os                       :  %s", host.OS))
