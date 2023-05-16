@@ -103,8 +103,8 @@ func (r *RedisStream) GetGroups() []redis.XInfoGroup {
 }
 
 // GroupCreate 创建消费组
-//group 消费组名称开始编号。
-//startIds 0表示从开头，$表示从末尾，收到下一条生产消息才开始消费 stream不存在，则会报错，所以在后面 加上 MkStream
+// group 消费组名称开始编号。
+// startIds 0表示从开头，$表示从末尾，收到下一条生产消息才开始消费 stream不存在，则会报错，所以在后面 加上 MkStream
 func (r *RedisStream) GroupCreate(group string, startIds ...string) bool {
 	if len(group) == 0 {
 		return false
@@ -255,9 +255,15 @@ func (r *RedisStream) Add(value interface{}, msgId ...string) string {
 	atomic.AddInt64(&r.count, 1)
 
 	var trim = false
-	if r.MaxLength > 0 && r.count%1000 == 0 {
-		r.count = r.Count() + 1
-		trim = true
+	if r.MaxLength > 0 {
+		if r.MaxLength < 1000 && r.count%r.MaxLength*2 == 0 {
+			r.count = r.Count() + 1
+			trim = true
+		}
+		if r.MaxLength > 1000 && r.count%1000 == 0 {
+			r.count = r.Count() + 1
+			trim = true
+		}
 	}
 
 	var id = ""
