@@ -366,7 +366,8 @@ func (r *RedisStream) SetNextId(id string) {
 var _nextRetry time.Time
 
 // RetryAck 处理未确认的死信，重新放入队列
-func (r *RedisStream) RetryAck() {
+func (r *RedisStream) RetryAck() int {
+	var count = 0
 	var now = time.Now()
 	// 一定间隔处理当前key死信
 	if _nextRetry.UnixMilli() < now.UnixMilli() {
@@ -394,6 +395,7 @@ func (r *RedisStream) RetryAck() {
 							r.logger.Debug(fmt.Sprintf("%s 定时回滚：%v", r.Group, xPendingExt))
 						}
 						r.Claim(r.Group, r.consumer, xPendingExt.ID, r.RetryInterval*1000)
+						count++
 					}
 				}
 
@@ -421,7 +423,7 @@ func (r *RedisStream) RetryAck() {
 			}
 		}
 	}
-
+	return count
 }
 
 // Read 原始独立消费
