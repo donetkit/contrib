@@ -102,7 +102,7 @@ func (sc *ShardedCache) IsExist(key string) bool {
 	return sc.bucket(key).IsExist(key)
 }
 func (sc *ShardedCache) Delete(key string) (int64, error) {
-	return sc.bucket(key).Delete(key)
+	return sc.bucket(key).Delete(key), nil
 }
 
 func (sc *ShardedCache) Increment(key string, val int64) (int64, error) {
