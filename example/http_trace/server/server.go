@@ -15,22 +15,13 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	otel_http "github.com/donetkit/contrib/utils/otel_http"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.10.0"
-	"io"
-	"log"
-	"net/http"
-
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/baggage"
-	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -55,29 +46,29 @@ func initTracer() *sdktrace.TracerProvider {
 }
 
 func main() {
-	tp := initTracer()
-	defer func() {
-		if err := tp.Shutdown(context.Background()); err != nil {
-			log.Printf("Error shutting down tracer provider: %v", err)
-		}
-	}()
-
-	uk := attribute.Key("username")
-
-	helloHandler := func(w http.ResponseWriter, req *http.Request) {
-		ctx := req.Context()
-		span := trace.SpanFromContext(ctx)
-		bag := baggage.FromContext(ctx)
-		span.AddEvent("handling this...", trace.WithAttributes(uk.String(bag.Member("username").Value())))
-
-		_, _ = io.WriteString(w, "Hello, world!\n")
-	}
-
-	otelHandler := otel_http.NewHandler(http.HandlerFunc(helloHandler), "Hello")
-
-	http.Handle("/hello", otelHandler)
-	err := http.ListenAndServe(":7777", nil)
-	if err != nil {
-		panic(err)
-	}
+	//tp := initTracer()
+	//defer func() {
+	//	if err := tp.Shutdown(context.Background()); err != nil {
+	//		log.Printf("Error shutting down tracer provider: %v", err)
+	//	}
+	//}()
+	//
+	//uk := attribute.Key("username")
+	//
+	//helloHandler := func(w http.ResponseWriter, req *http.Request) {
+	//	ctx := req.Context()
+	//	span := trace.SpanFromContext(ctx)
+	//	bag := baggage.FromContext(ctx)
+	//	span.AddEvent("handling this...", trace.WithAttributes(uk.String(bag.Member("username").Value())))
+	//
+	//	_, _ = io.WriteString(w, "Hello, world!\n")
+	//}
+	//
+	//otelHandler := otel_http.NewHandler(http.HandlerFunc(helloHandler), "Hello")
+	//
+	//http.Handle("/hello", otelHandler)
+	//err := http.ListenAndServe(":7777", nil)
+	//if err != nil {
+	//	panic(err)
+	//}
 }
