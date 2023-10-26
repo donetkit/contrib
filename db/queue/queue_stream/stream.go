@@ -6,7 +6,7 @@ import (
 	"github.com/donetkit/contrib-log/glog"
 	"github.com/donetkit/contrib/utils/cache"
 	"github.com/go-redis/redis/v8"
-	"github.com/shirou/gopsutil/v3/host"
+	"github.com/shirou/gopsutil/host"
 	"os"
 	"strconv"
 	"strings"

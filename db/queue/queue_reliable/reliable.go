@@ -9,7 +9,7 @@ import (
 	"github.com/donetkit/contrib/utils/gjson"
 	"github.com/donetkit/contrib/utils/grand"
 	chost "github.com/donetkit/contrib/utils/host"
-	"github.com/shirou/gopsutil/v3/host"
+	"github.com/shirou/gopsutil/host"
 	"os"
 	"strings"
 	"time"

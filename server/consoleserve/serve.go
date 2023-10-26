@@ -10,7 +10,7 @@ import (
 	"github.com/donetkit/contrib/utils/console_colors"
 	"github.com/donetkit/contrib/utils/files"
 	"github.com/donetkit/contrib/utils/gtime"
-	"github.com/shirou/gopsutil/v3/host"
+	"github.com/shirou/gopsutil/host"
 	"os"
 	"strconv"
 	"time"

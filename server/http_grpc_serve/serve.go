@@ -13,7 +13,7 @@ import (
 	"github.com/donetkit/contrib/utils/gtime"
 	chost "github.com/donetkit/contrib/utils/host"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/shirou/gopsutil/v3/host"
+	"github.com/shirou/gopsutil/host"
 	"github.com/soheilhy/cmux"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
