@@ -43,7 +43,7 @@ func (c *Cache) Get(key string) interface{} {
 	}
 	var reply interface{}
 	if err = Unmarshal(data, &reply); err != nil {
-		return nil
+		return string(data)
 	}
 	return reply
 }
