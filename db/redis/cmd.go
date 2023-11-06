@@ -42,7 +42,7 @@ func (c *Cache) Get(key string) interface{} {
 		return nil
 	}
 	var reply interface{}
-	if err = json.Unmarshal(data, &reply); err != nil {
+	if err = Unmarshal(data, &reply); err != nil {
 		return nil
 	}
 	return reply
