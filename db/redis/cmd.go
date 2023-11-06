@@ -58,7 +58,7 @@ func (c *Cache) GetString(key string) (string, error) {
 }
 
 func (c *Cache) Set(key string, value interface{}, timeout time.Duration) error {
-	data, err := json.Marshal(value)
+	data, err := Marshal(value)
 	if err != nil {
 		return err
 	}
@@ -67,7 +67,7 @@ func (c *Cache) Set(key string, value interface{}, timeout time.Duration) error 
 }
 
 func (c *Cache) SetEX(key string, value interface{}, timeout time.Duration) error {
-	data, err := json.Marshal(value)
+	data, err := Marshal(value)
 	if err != nil {
 		return err
 	}
@@ -144,7 +144,7 @@ func (c *Cache) Scan(cursor uint64, match string, count int64) ([]string, uint64
 }
 
 func (c *Cache) SetNX(key string, value interface{}, expiration time.Duration) bool {
-	data, err := json.Marshal(value)
+	data, err := Marshal(value)
 	if err != nil {
 		return false
 	}

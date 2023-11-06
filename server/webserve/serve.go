@@ -2,6 +2,7 @@ package webserve
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/donetkit/contrib-log/glog"
 	"github.com/donetkit/contrib/pkg/discovery"
@@ -126,7 +127,7 @@ func (s *Server) Run() {
 		MaxHeaderBytes: s.maxHeaderBytes,
 	}
 	go func() {
-		if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := s.httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			return
 		}
 	}()
