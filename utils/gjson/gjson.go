@@ -1,6 +1,9 @@
 package gjson
 
-import "github.com/goccy/go-json"
+import (
+	"bytes"
+	"github.com/goccy/go-json"
+)
 
 func Marshal(v any) string {
 	val, err := json.Marshal(v)
@@ -8,6 +11,14 @@ func Marshal(v any) string {
 		return ""
 	}
 	return string(val)
+}
+
+func MarshalEscapeHTML(v any) string {
+	buff := bytes.NewBuffer([]byte{})
+	jsonEncoder := json.NewEncoder(buff)
+	jsonEncoder.SetEscapeHTML(false)
+	jsonEncoder.Encode(v)
+	return buff.String()
 }
 
 func MarshalIndent(v any) string {
