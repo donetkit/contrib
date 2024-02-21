@@ -92,7 +92,7 @@ func Run(address string) {
 				TransmitTimestamp:  toNTPTime(time.Now()),           // Server transmit time
 			}
 
-			log.Println("mode 3 ", mode)
+			//log.Println("mode 3 ", mode)
 			copy(b[32:40], packet.TransmitTimestamp[:])
 
 		case 4: // Server mode
