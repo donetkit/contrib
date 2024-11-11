@@ -168,12 +168,12 @@ func (s *Server) Run() {
 		s.Logger.Error(err)
 		os.Exit(0)
 	}
+	s.registerDiscovery()
 	go func() {
 		if err := s.GServer.Serve(lis); err != nil && err != grpc.ErrServerStopped {
 			return
 		}
 	}()
-	s.registerDiscovery()
 	s.printLog()
 	systemsignal.HookSignals(s)
 	//s.awaitSignal()
